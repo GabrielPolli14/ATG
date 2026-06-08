@@ -502,20 +502,37 @@ const DADOS_PADRAO = {
       {mes:"Mai",qtd:966,perc:64},
     ],
   },
-  // Crédito por CIA (Boleto Oficina / Financeiro)
+  // Crédito LÍQUIDO por CIA (Crédito − Estorno), valor cheio, fonte: painel financeiro
   creditoCia:[
-    {cia:"Porto Seguro",valor:22626.12},
-    {cia:"Allianz",valor:12762.05},
-    {cia:"Tokio",valor:10090.51},
-    {cia:"Bradesco",valor:7893.72},
-    {cia:"Zurich",valor:5856.69},
+    {cia:"Porto Seguro",valor:932445.97},
+    {cia:"Tokio",valor:195203.92},
+    {cia:"Allianz",valor:125530.11},
+    {cia:"Mapfre",valor:102519.20},
+    {cia:"Azul",valor:50415.76},
+    {cia:"Alfa",valor:36574.66},
+    {cia:"HDI",valor:34662.15},
+    {cia:"Suhai",valor:31544.50},
+    {cia:"Sura",valor:27552.60},
+    {cia:"Zurich",valor:16259.20},
+    {cia:"Bradesco",valor:10442.87},
+    {cia:"Ezze",valor:10049.90},
+    {cia:"Pier",valor:2530.32},
+    {cia:"Unidas",valor:2230.60},
+    {cia:"Gente",valor:1065.30},
+    {cia:"Sancor",valor:814.63},
+    {cia:"Banestes",valor:693.20},
+    {cia:"Sompo",valor:610.00},
+    {cia:"Mitsui",valor:153.83},
+    {cia:"Liberty",valor:-33893.53},
   ],
-  creditoTotal:1489141.92,
+  creditoTotal:1547405.19,
+  // 4ª medida — Em Dia (a vencer / dentro do prazo). Passou a existir a partir de 2026.
+  emDiaTotal:14278378.58,
   // Plano de ação
   acoes:[
     {desc:"Acionar Porto Seguro — maior exposição em Cobrar CIA",resp:"Financeiro",prazo:"2026-06-10",status:"Em andamento"},
     {desc:"Reduzir devoluções em aberto — pico em Abr/26",resp:"Logística",prazo:"2026-06-15",status:"Em andamento"},
-    {desc:"Destravar Boleto Oficina pendente",resp:"Oficina",prazo:"2026-06-18",status:"Pendente"},
+    {desc:"Conciliar crédito líquido — Porto, Tokio e Allianz concentram o maior valor",resp:"Financeiro",prazo:"2026-06-18",status:"Pendente"},
     {desc:"Negociar Allianz — prazo médio crítico",resp:"Financeiro",prazo:"2026-06-20",status:"Pendente"},
   ],
 };
@@ -636,7 +653,7 @@ function renderChips(){
 /* ============================================================
    COMPONENTES REUTILIZÁVEIS
 ============================================================ */
-function kpi(l,v,sub,cls){return `<div class="kpi ${cls||''}"><div class="kl">${l}</div><div class="kv">${v}</div>${sub?`<div class="ksub">${sub}</div>`:''}</div>`;}
+function kpi(l,v,sub,cls){return `<div class="kpi ${cls||''}"><div class="kl">${l}</div><div class="kv">${v}</div></div>`;}
 function panelOpen(titulo,hint,cls){return `<div class="panel"><div class="panel-h"><h3><span class="bar"></span>${titulo}</h3>${hint?`<span class="hint">${hint}</span>`:''}</div><div class="${cls||''}">`;}
 function panelClose(){return `</div></div>`;}
 function vazio(msg){return `<div class="empty"><div class="ic">🔍</div>${msg||'Sem dados para os filtros selecionados.'}</div>`;}
@@ -652,14 +669,16 @@ function renderGerencial(){
   const cauda=rows.filter(r=>r.ano<anoMax).reduce((s,r)=>s+r.valor,0);
   const nova=rows.filter(r=>r.ano===anoMax).reduce((s,r)=>s+r.valor,0);
   const credito=DR.creditoTotal||0;
+  const emDia=DR.emDiaTotal||0;
   const devolucao=rows.filter(r=>r.motivo==="Devolução").reduce((s,r)=>s+r.valor,0);
 
   let html=`<div class="kpi-row">
-    ${kpi("Valor Total",fmtM(total),(rows.length+" registros"),"dk")}
-    ${kpi("Cauda Histórica",fmtM(cauda),"Safras anteriores","")}
-    ${kpi("Inadimplência Nova",fmtM(nova),"Safra "+anoMax,"rd")}
-    ${kpi("Crédito",fmtM(credito),"Boleto Oficina","am")}
-    ${kpi("Em Devolução",fmtM(devolucao),"Logística","vi")}
+    ${kpi("Valor Total",fmtM(total),null,"dk")}
+    ${kpi("Cauda Histórica",fmtM(cauda),null,"")}
+    ${kpi("Inadimplência Nova",fmtM(nova),null,"rd")}
+    ${kpi("Em Dia",fmtM(emDia),null,"gr")}
+    ${kpi("Crédito",fmtM(credito),null,"am")}
+    ${kpi("Em Devolução",fmtM(devolucao),null,"vi")}
   </div>`;
 
   if(!rows.length){document.getElementById("content").innerHTML=`<div class="view on">${html}${vazio()}</div>`;return;}
@@ -670,14 +689,14 @@ function renderGerencial(){
   </div>
   <div class="grid g2">
     ${panelOpen("Valor por Ano","","chart-box")}<canvas id="c-ano"></canvas>${panelClose()}
-    ${panelOpen("Valor por Setor","","chart-box")}<canvas id="c-setor"></canvas>${panelClose()}
+    ${panelOpen("Evolução mensal","valor por mês ao longo do tempo","chart-box")}<canvas id="c-mensal"></canvas>${panelClose()}
   </div>
   <div class="grid">
     ${panelOpen("Histórico anual — Faturamento × Inadimplência","série completa 2018–2026","chart-box lg")}<canvas id="c-hist"></canvas>${panelClose()}
   </div>`;
   document.getElementById("content").innerHTML=`<div class="view on">${html}</div>`;
 
-  const byCia=agrupar(rows,"cia"),byMot=agrupar(rows,"motivo"),byAno=agrupar(rows,"ano"),bySet=agrupar(rows,"setor");
+  const byCia=agrupar(rows,"cia"),byMot=agrupar(rows,"motivo"),byAno=agrupar(rows,"ano");
   const barOpts=(onClickArr,campo)=>({indexAxis:"y",responsive:true,maintainAspectRatio:false,
     onClick:(e,el)=>{if(el.length)setFiltro(campo,onClickArr[el[0].index][0]);},
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} (${fmtP(total?c.raw/total*100:0)})`}}},
@@ -686,7 +705,13 @@ function renderGerencial(){
   mkChart("c-cia",{type:"bar",data:{labels:byCia.map(x=>x[0]),datasets:[{data:byCia.map(x=>x[1]),backgroundColor:byCia.map((_,i)=>COR[i%COR.length]),borderRadius:5}]},options:barOpts(byCia,"cia")});
   mkChart("c-motivo",{type:"bar",data:{labels:byMot.map(x=>x[0]),datasets:[{data:byMot.map(x=>x[1]),backgroundColor:byMot.map((_,i)=>COR[i%COR.length]),borderRadius:5}]},options:barOpts(byMot,"motivo")});
   mkChart("c-ano",{type:"bar",data:{labels:byAno.map(x=>x[0]).sort(),datasets:[{data:byAno.sort((a,b)=>a[0]-b[0]).map(x=>x[1]),backgroundColor:byAno.map((_,i)=>i>=byAno.length-2?"#0A64FF":"rgba(10,100,255,.32)"),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,onClick:(e,el)=>{if(el.length)setFiltro("ano",byAno.sort((a,b)=>a[0]-b[0])[el[0].index][0]);},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,.04)"}}}}});
-  mkChart("c-setor",{type:"doughnut",data:{labels:bySet.map(x=>x[0]),datasets:[{data:bySet.map(x=>x[1]),backgroundColor:COR,borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"58%",plugins:{legend:{position:"bottom",labels:{font:{size:10},padding:8,boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)} (${fmtP(total?c.raw/total*100:0)})`}}}}});
+  // Evolução mensal — agrega por ano+mês em ordem cronológica
+  const ordMes=m=>{const i=MESES.indexOf(m);return i<0?12:i;};
+  const mensalMap={};
+  rows.forEach(r=>{const k=r.ano+"|"+r.mes;mensalMap[k]=(mensalMap[k]||0)+r.valor;});
+  const mensal=Object.entries(mensalMap).map(([k,v])=>{const[a,m]=k.split("|");return{ano:+a,mes:m,valor:v};})
+    .sort((x,y)=>x.ano-y.ano||ordMes(x.mes)-ordMes(y.mes));
+  mkChart("c-mensal",{type:"line",data:{labels:mensal.map(p=>p.mes==="—"?String(p.ano):`${p.mes}/${String(p.ano).slice(2)}`),datasets:[{label:"Valor",data:mensal.map(p=>p.valor),borderColor:"#0A64FF",backgroundColor:"rgba(10,100,255,.10)",fill:true,tension:.32,pointRadius:2.5,borderWidth:2.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{grid:{display:false},ticks:{maxRotation:60,minRotation:0,autoSkip:true,maxTicksLimit:14}},y:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,.04)"}}}}});
 
   const h=DR.historico;
   mkChart("c-hist",{data:{labels:h.map(x=>x.ano),datasets:[
@@ -778,13 +803,13 @@ function renderCredito(){
   const diasMedio=Math.round(conc.reduce((s,c)=>s+c.dias,0)/conc.length);
 
   let html=`<div class="kpi-row">
-    ${kpi("Crédito total",fmtM(DR.creditoTotal),DR.creditoCia.length+" CIAs","am")}
-    ${kpi("Maior crédito (CIA)",DR.creditoCia[0]?.cia||"—",fmtM(DR.creditoCia[0]?.valor||0),"dk")}
+    ${kpi("Crédito líquido total",fmtM(DR.creditoTotal),null,"am")}
+    ${kpi("Maior crédito (CIA)",DR.creditoCia[0]?.cia||"—",null,"dk")}
     ${kpi("Dias médios de conciliação",diasMedio+" dias","média geral","")}
     ${kpi("CIAs em conciliação",fmtN(conc.length),"base de faturamento","gr")}
   </div>
   <div class="grid g2">
-    ${panelOpen("Valor total de crédito por CIA","Boleto Oficina / Financeiro","chart-box")}<canvas id="c-cred"></canvas>${panelClose()}
+    ${panelOpen("Crédito líquido por CIA","Crédito − Estorno • valor cheio","chart-box")}<canvas id="c-cred"></canvas>${panelClose()}
     ${panelOpen("Dias médios de baixa por CIA","conciliação financeira","chart-box")}<canvas id="c-dias"></canvas>${panelClose()}
   </div>
   ${panelOpen("Conciliação por CIA — faturamento e prazo","")}
@@ -795,7 +820,7 @@ function renderCredito(){
   document.getElementById("content").innerHTML=`<div class="view on">${html}</div>`;
 
   const cc=[...DR.creditoCia].sort((a,b)=>b.valor-a.valor);
-  mkChart("c-cred",{type:"bar",data:{labels:cc.map(c=>c.cia),datasets:[{data:cc.map(c=>c.valor),backgroundColor:cc.map((_,i)=>COR[i%COR.length]),borderRadius:5}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} (${fmtP(totalCred?c.raw/totalCred*100:0)})`}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,.04)"}},y:{grid:{display:false}}}}});
+  mkChart("c-cred",{type:"bar",data:{labels:cc.map(c=>c.cia),datasets:[{data:cc.map(c=>c.valor),backgroundColor:cc.map((c,i)=>c.valor<0?"#EF4444":COR[i%COR.length]),borderRadius:5}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw<0?`${fmt(c.raw)} (estorno > crédito)`:`${fmt(c.raw)} (${fmtP(totalCred?c.raw/totalCred*100:0)})`}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,.04)"}},y:{grid:{display:false}}}}});
   const cd=[...conc].sort((a,b)=>b.dias-a.dias);
   mkChart("c-dias",{type:"bar",data:{labels:cd.map(c=>c.cia),datasets:[{data:cd.map(c=>c.dias),backgroundColor:cd.map(c=>c.dias>35?"#F59E0B":"#0A64FF"),borderRadius:5}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+" dias"}}},scales:{x:{grid:{color:"rgba(0,0,0,.04)"}},y:{grid:{display:false}}}}});
 }
@@ -892,7 +917,7 @@ function renderBoletim(){
       <div class="analise-gerencial"><div class="ag-grid">
         <div class="ag-item"><div class="ag-item-title">🏢 Concentração por CIA</div><div class="ag-item-txt"><strong>${maiorCia?.[0]}</strong> lidera com <strong>${fmtM(maiorCia?.[1]||0)}</strong> (${fmtP(total?maiorCia[1]/total*100:0)} do total). Ação prioritária de cobrança e conciliação.</div></div>
         <div class="ag-item"><div class="ag-item-title">📋 Principal Motivo</div><div class="ag-item-txt"><strong>${maiorMot?.[0]}</strong> concentra <strong>${fmtM(maiorMot?.[1]||0)}</strong>. Priorizar tratativas nessa categoria reduz o saldo no próximo ciclo.</div></div>
-        <div class="ag-item"><div class="ag-item-title">💳 Crédito & Devolução</div><div class="ag-item-txt">Crédito pendente: <strong>${fmtM(credito)}</strong>. Em devolução: <strong>${fmtM(devolucao)}</strong>. Regularização via Boleto Oficina pode destravar parte do valor.</div></div>
+        <div class="ag-item"><div class="ag-item-title">💳 Crédito & Devolução</div><div class="ag-item-txt">Crédito líquido (Crédito − Estorno): <strong>${fmtM(credito)}</strong>. Em devolução: <strong>${fmtM(devolucao)}</strong>. Conciliar os maiores créditos (Porto, Tokio, Allianz) acelera a compensação.</div></div>
         <div class="ag-item"><div class="ag-item-title">🚚 Logística</div><div class="ag-item-txt">Eficiência do mês: <strong>${r.eficMes}%</strong>. Calda real final: <strong>${fmtN(r.caldaRealFinal)}</strong> coletas pendentes acumuladas.</div></div>
       </div></div>
     </div>
@@ -905,7 +930,7 @@ function renderBoletim(){
       <div class="b-passos">
         <div class="b-passo"><span class="b-pn">1</span><span>Intensificar cobrança da CIA líder (${maiorCia?.[0]}) com follow-up semanal.</span></div>
         <div class="b-passo"><span class="b-pn">2</span><span>Reduzir a calda de coletas pendentes (${fmtN(r.caldaRealFinal)}), priorizando Abr/Mai.</span></div>
-        <div class="b-passo"><span class="b-pn">3</span><span>Destravar crédito de Boleto Oficina (${fmtM(credito)}) via regularização.</span></div>
+        <div class="b-passo"><span class="b-pn">3</span><span>Conciliar o crédito líquido (${fmtM(credito)}), priorizando as maiores CIAs.</span></div>
         <div class="b-passo"><span class="b-pn">4</span><span>Elevar eficiência de coletas acima da meta de 50% no próximo mês.</span></div>
       </div>
     </div>
@@ -1195,7 +1220,16 @@ function toast(msg,ic="✓"){
 /* ============================================================
    BOOT
 ============================================================ */
+function normalizarFato(){
+  // Ajuste 4: unir "Cobrar cia" (minúsculo) com "Cobrar CIA"
+  // Ajuste 2: Boleto Oficina pertence à família Devolução/Logística (não é crédito)
+  DR.fato.forEach(r=>{
+    if(r.motivo==="Cobrar cia") r.motivo="Cobrar CIA";
+    if(r.motivo==="Boleto Oficina") r.setor="Logística";
+  });
+}
 document.addEventListener("DOMContentLoaded",()=>{
+  normalizarFato();
   document.getElementById("tb-refmes").textContent=DR.refMes||"—";
   const li=document.getElementById("sb-logo-img"); if(li) li.src=LOGO_AUTOGLASS;
   montarMenu();
