@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Inadimplência</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ RESET & VARS */
+:root{
+  --azul:#0A64FF;--marinho:#050A34;--claro:#73C6FF;--violeta:#2021D4;
+  --bg:#F0F4FF;--white:#fff;--borda:rgba(10,100,255,.12);
+  --cinza:#6B7280;--suave:#EEF2FF;--verde:#16a34a;--amber:#F59E0B;--red:#dc2626;
+  --sombra:0 2px 16px rgba(5,10,52,.09);--r:14px;--rsm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Poppins',sans-serif;font-size:13px;line-height:1.6;background:var(--bg);color:var(--marinho);font-weight:400}
+
+/* ============================================================ NAV */
+#nav{
+  position:sticky;top:0;z-index:2000;height:54px;
+  background:var(--marinho);display:flex;align-items:center;
+  justify-content:space-between;padding:0 24px;
+  box-shadow:0 2px 12px rgba(5,10,52,.3);
+}
+.nav-brand{font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:9px}
+.nav-brand span{color:var(--claro)}
+.nav-tabs{display:flex;gap:3px}
+.nav-tab{background:transparent;border:none;color:rgba(255,255,255,.5);font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:50px;cursor:pointer;transition:.2s}
+.nav-tab:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-tab.on{background:var(--azul);color:#fff}
+.nav-right{font-size:11px;color:rgba(255,255,255,.4);font-weight:300}
+
+/* ============================================================ VIEWS */
+.view{display:none}.view.on{display:block}
+
+/* ============================================================ BOTÕES */
+.btn{border:none;border-radius:var(--rsm);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;padding:8px 15px;display:inline-flex;align-items:center;gap:6px;transition:.2s;white-space:nowrap}
+.btn-primary{background:var(--azul);color:#fff}.btn-primary:hover{background:#0855de}
+.btn-outline{background:transparent;border:1.5px solid var(--borda);color:var(--azul)}.btn-outline:hover{background:var(--suave)}
+.btn-green{background:var(--verde);color:#fff}.btn-green:hover{background:#15803d}
+.btn-amber{background:var(--amber);color:#fff}.btn-amber:hover{background:#d97706}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#b91c1c}
+.btn-violet{background:var(--violeta);color:#fff}.btn-violet:hover{background:#1a1baa}
+.btn-sm{padding:5px 11px;font-size:11px}
+.btn svg{width:14px;height:14px;flex-shrink:0}
+.btn-pdf-float{position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,var(--azul),var(--violeta));color:#fff;border:none;padding:11px 22px;border-radius:50px;font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 6px 24px rgba(10,100,255,.38);transition:.2s;display:none;align-items:center;gap:7px}
+.btn-pdf-float:hover{transform:translateY(-2px)}
+.btn-pdf-float:disabled{opacity:.7;cursor:wait}
+
+/* ============================================================ GERENCIAL LAYOUT */
+#view-gerencial{background:var(--bg)}
+.ger-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 54px)}
+.sidebar{background:var(--white);border-right:1px solid var(--borda);padding:20px 16px;overflow-y:auto;position:sticky;top:54px;height:calc(100vh - 54px)}
+.sidebar-logo{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--azul);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--borda)}
+.s-section{margin-bottom:18px}
+.s-sec-title{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--cinza);margin-bottom:8px}
+.s-btn{width:100%;text-align:left;background:transparent;border:none;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;color:var(--marinho);padding:8px 10px;border-radius:var(--rsm);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:8px}
+.s-btn:hover{background:var(--suave);color:var(--azul)}
+.s-btn.on{background:var(--suave);color:var(--azul);font-weight:600}
+.s-divider{height:1px;background:var(--borda);margin:14px 0}
+.ger-main{padding:22px;overflow-y:auto}
+
+/* ============================================================ ABAS INTERNAS */
+.tabs-row{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--borda);padding-bottom:0}
+.tab-btn{background:transparent;border:none;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;color:var(--cinza);padding:8px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tab-btn:hover{color:var(--azul)}
+.tab-btn.on{color:var(--azul);border-bottom-color:var(--azul);font-weight:600}
+.tab-content{display:none}.tab-content.on{display:block}
+
+/* ============================================================ FILTROS */
+.filtros-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--white);border-radius:var(--r);padding:16px;box-shadow:var(--sombra);border:1px solid var(--borda);margin-bottom:16px}
+.fg{display:flex;flex-direction:column;gap:4px;min-width:120px;flex:1}
+.fg label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--azul)}
+.fg select,.fg input{border:1px solid var(--borda);border-radius:var(--rsm);padding:7px 9px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--marinho);background:#fff;outline:none;transition:.2s}
+.fg select:focus,.fg input:focus{border-color:var(--azul)}
+
+/* ============================================================ KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px;margin-bottom:16px}
+.kpi{background:var(--white);border-radius:var(--r);padding:15px 13px;box-shadow:var(--sombra);border:1px solid var(--borda);position:relative;overflow:hidden}
+.kpi.dk{background:linear-gradient(135deg,var(--marinho),#0C1460);border-color:transparent}
+.kpi.dk .kl{color:rgba(255,255,255,.55)}.kpi.dk .kv{color:var(--claro)}
+.kpi.gr{border-left:4px solid var(--verde)}.kpi.am{border-left:4px solid var(--amber)}.kpi.rd{border-left:4px solid var(--red)}
+.kl{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--cinza);margin-bottom:5px}
+.kv{font-size:clamp(13px,1.8vw,19px);font-weight:700;color:var(--marinho);line-height:1.1}
+.kicon{position:absolute;top:11px;right:11px;width:27px;height:27px;border-radius:7px;background:rgba(10,100,255,.07);display:flex;align-items:center;justify-content:center;font-size:13px}
+
+/* ============================================================ GRÁFICOS */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.chart-row.tri{grid-template-columns:1fr 1fr 1fr}
+.chart-box{background:var(--white);border-radius:var(--r);padding:18px 15px;box-shadow:var(--sombra);border:1px solid var(--borda);overflow:hidden}
+.chart-box.full{grid-column:1/-1}
+.ct{font-size:12px;font-weight:600;margin-bottom:2px}
+.cd{font-size:10px;color:var(--cinza);margin-bottom:12px;font-weight:300}
+.cw{position:relative;height:210px;width:100%;overflow:hidden}
+.cw canvas{max-width:100%!important;max-height:100%!important}
+
+/* ============================================================ TABELA */
+.tbl-box{background:var(--white);border-radius:var(--r);box-shadow:var(--sombra);border:1px solid var(--borda);overflow:hidden;margin-bottom:14px}
+.tbl-hdr{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--borda);flex-wrap:wrap;gap:8px}
+.tbl-hdr h3{font-size:13px;font-weight:600}
+.tbl-hdr-r{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.t-scroll{overflow-x:auto}
+table.gt{width:100%;border-collapse:collapse;font-size:12px}
+table.gt thead tr{background:linear-gradient(135deg,var(--marinho),#0C1460);color:#fff}
+table.gt th{padding:8px 12px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;cursor:pointer;user-select:none}
+table.gt th:hover{opacity:.85}
+table.gt td{padding:8px 12px;border-bottom:1px solid var(--suave);color:#374151}
+table.gt td strong{color:var(--marinho);font-weight:600}
+table.gt tbody tr:hover{background:#F8FAFF}
+table.gt tfoot td{padding:9px 12px;font-weight:700;color:var(--marinho);border-top:2px solid var(--azul)}
+.badge{display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:600}
+.badge-blue{background:rgba(10,100,255,.1);color:var(--azul)}
+.badge-green{background:rgba(22,163,74,.1);color:var(--verde)}
+.badge-amber{background:rgba(245,158,11,.1);color:var(--amber)}
+.badge-red{background:rgba(220,38,38,.1);color:var(--red)}
+.pbar-wrap{display:flex;align-items:center;gap:5px}
+.pbar{height:4px;background:var(--suave);border-radius:2px;width:60px;overflow:hidden}
+.pbar-f{height:100%;background:var(--azul);border-radius:2px}
+
+/* ============================================================ PLANO DE AÇÕES */
+.acoes-form{background:var(--white);border-radius:var(--r);padding:20px;box-shadow:var(--sombra);border:1px solid var(--borda);margin-bottom:14px}
+.acoes-form h3{font-size:14px;font-weight:600;margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.form-grid.tri{grid-template-columns:1fr 1fr 1fr}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-field label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--cinza)}
+.form-field input,.form-field select,.form-field textarea{border:1px solid var(--borda);border-radius:var(--rsm);padding:7px 9px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--marinho);background:#fff;outline:none;transition:.2s}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--azul)}
+.form-field textarea{resize:vertical;min-height:60px}
+.acao-card{background:var(--white);border-radius:var(--rsm);padding:14px 15px;box-shadow:0 1px 8px rgba(5,10,52,.07);border:1px solid var(--borda);margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+.acao-num{width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,var(--azul),var(--violeta));color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.acao-body{flex:1}
+.acao-title{font-weight:600;font-size:13px;margin-bottom:3px}
+.acao-meta{font-size:11px;color:var(--cinza);font-weight:300;margin-bottom:4px}
+.acao-impacto{font-size:12px;color:#374151;font-weight:400}
+.acao-actions{display:flex;gap:5px;flex-shrink:0}
+
+/* ============================================================ IMPORTAR */
+.upload-area{border:2px dashed var(--borda);border-radius:var(--r);padding:40px;text-align:center;transition:.2s;cursor:pointer;background:var(--white)}
+.upload-area:hover,.upload-area.over{border-color:var(--azul);background:var(--suave)}
+.upload-area input{display:none}
+.upload-icon{font-size:40px;margin-bottom:12px}
+.upload-title{font-weight:600;font-size:14px;margin-bottom:6px}
+.upload-desc{font-size:12px;color:var(--cinza);font-weight:300}
+.mapa-cols{background:var(--white);border-radius:var(--r);padding:18px;box-shadow:var(--sombra);border:1px solid var(--borda);margin-top:14px}
+.mapa-cols h4{font-size:13px;font-weight:600;margin-bottom:12px}
+.mapa-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;align-items:center}
+.mapa-row label{font-size:12px;font-weight:500}
+.preview-box{background:var(--suave);border-radius:var(--rsm);padding:12px;font-size:11px;font-family:monospace;color:var(--marinho);overflow-x:auto;margin-top:10px;max-height:180px;overflow-y:auto}
+
+/* ============================================================ BOLETIM */
+#view-boletim{background:var(--bg)}
+#bol-wrap{max-width:1040px;margin:0 auto;padding:0 20px 100px}
+.b-hdr{background:linear-gradient(135deg,var(--marinho) 0%,#0C1460 55%,var(--violeta) 100%);color:#fff;padding:42px 50px;border-radius:0 0 22px 22px;margin:0 -20px 34px;position:relative;overflow:hidden;page-break-inside:avoid;break-inside:avoid}
+.b-hdr::before{content:'';position:absolute;top:-50px;right:-50px;width:260px;height:260px;background:radial-gradient(circle,rgba(115,198,255,.14) 0%,transparent 70%);border-radius:50%}
+.bh-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;position:relative;z-index:1}
+.bh-badge{background:rgba(115,198,255,.18);border:1px solid rgba(115,198,255,.35);color:var(--claro);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:4px 11px;border-radius:50px;display:inline-block;margin-bottom:11px}
+.b-hdr h1{font-size:clamp(19px,3vw,31px);font-weight:700;line-height:1.15;margin-bottom:7px}
+.b-hdr p{font-size:13px;color:rgba(255,255,255,.65);font-weight:300;max-width:430px}
+.bh-data{text-align:right;font-size:11px;color:rgba(255,255,255,.5);font-weight:300;flex-shrink:0}
+.bh-data strong{display:block;font-size:16px;font-weight:600;color:var(--claro);margin:4px 0 2px}
+.b-sec{margin-bottom:36px;page-break-inside:avoid;break-inside:avoid}
+.b-stitle{font-size:10px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--azul);margin-bottom:13px;display:flex;align-items:center;gap:9px;page-break-after:avoid;break-after:avoid}
+.b-stitle::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--borda),transparent)}
+.b-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:11px}
+.b-card{background:var(--white);border-radius:var(--r);padding:16px 14px;box-shadow:var(--sombra);border:1px solid var(--borda);position:relative;overflow:hidden;page-break-inside:avoid;break-inside:avoid}
+.b-card.dk{background:linear-gradient(135deg,var(--marinho),#0C1460);border-color:transparent}
+.b-card.dk .bcl{color:rgba(255,255,255,.55)}.b-card.dk .bcv{color:var(--claro)}
+.b-card.gr{border-left:4px solid var(--verde)}.b-card.am{border-left:4px solid var(--amber)}
+.bcl{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--cinza);margin-bottom:5px}
+.bcv{font-size:clamp(13px,1.8vw,19px);font-weight:700;color:var(--marinho);line-height:1.1}
+.bcicon{position:absolute;top:11px;right:11px;width:27px;height:27px;border-radius:7px;background:rgba(10,100,255,.07);display:flex;align-items:center;justify-content:center;font-size:13px}
+.b-analise{background:var(--suave);border-left:4px solid var(--azul);border-radius:0 var(--rsm) var(--rsm) 0;padding:14px 18px;font-size:12px;color:#2D3748;line-height:1.75;font-weight:300;margin-bottom:12px;page-break-inside:avoid;break-inside:avoid}
+.b-analise strong{color:var(--marinho);font-weight:600}
+.b-cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.b-cc{background:var(--white);border-radius:var(--r);padding:18px 15px;box-shadow:var(--sombra);border:1px solid var(--borda);page-break-inside:avoid;break-inside:avoid;overflow:hidden;max-width:100%}
+.b-cc.full{grid-column:1/-1}
+.bct{font-size:13px;font-weight:600;margin-bottom:3px}
+.bcd{font-size:11px;color:var(--cinza);margin-bottom:13px;font-weight:300}
+.bcw{position:relative;height:220px;width:100%;overflow:hidden}
+.bcw canvas{max-width:100%!important;max-height:100%!important}
+.b-cias-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.b-cias-box{background:var(--white);border-radius:var(--r);padding:18px 15px;box-shadow:var(--sombra);border:1px solid var(--borda);page-break-inside:avoid;break-inside:avoid;overflow:hidden}
+.cia-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--suave)}
+.cia-row:last-child{border-bottom:none}
+.cia-rk{font-size:10px;font-weight:700;color:var(--azul);width:17px;flex-shrink:0}
+.cia-nm{flex:1;font-weight:500;font-size:12px}
+.cia-bw{width:55px}.cia-b{height:4px;background:var(--suave);border-radius:2px;overflow:hidden}
+.cia-bf{height:100%;background:linear-gradient(to right,var(--azul),var(--claro));border-radius:2px}
+.cia-vl{font-weight:700;font-size:11px;color:var(--marinho);white-space:nowrap}
+.b-tl{position:relative;padding-left:22px}
+.b-tl::before{content:'';position:absolute;left:5px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--azul),var(--claro));border-radius:1px}
+.b-tl-it{position:relative;margin-bottom:14px;background:var(--white);border-radius:var(--rsm);padding:11px 14px;box-shadow:0 2px 8px rgba(5,10,52,.07);border:1px solid var(--borda);page-break-inside:avoid;break-inside:avoid}
+.b-tl-it::before{content:'';position:absolute;left:-19px;top:13px;width:9px;height:9px;border-radius:50%;background:var(--azul);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--azul)}
+.b-tl-lbl{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--azul);margin-bottom:2px}
+.b-tl-txt{font-size:12px;color:#374151;line-height:1.55}
+.b-passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.b-passo{background:var(--white);border-radius:var(--rsm);padding:12px 14px;box-shadow:0 2px 8px rgba(5,10,52,.07);border:1px solid var(--borda);display:flex;align-items:flex-start;gap:9px;font-size:12px;color:#374151;line-height:1.5;page-break-inside:avoid;break-inside:avoid}
+.b-pn{width:22px;height:22px;border-radius:5px;background:linear-gradient(135deg,var(--azul),var(--violeta));color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.b-dev-tbl{background:var(--white);border-radius:var(--r);padding:16px 15px;box-shadow:var(--sombra);border:1px solid var(--borda);page-break-inside:avoid;break-inside:avoid;overflow-x:auto}
+table.bdt{width:100%;border-collapse:collapse;font-size:12px}
+table.bdt thead tr{background:linear-gradient(135deg,var(--marinho),#0C1460);color:#fff}
+table.bdt th{padding:8px 11px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.7px;text-transform:uppercase}
+table.bdt th:last-child{text-align:right}
+table.bdt td{padding:8px 11px;border-bottom:1px solid var(--suave);color:#374151}
+table.bdt td:last-child{text-align:right;font-weight:600;color:var(--marinho)}
+table.bdt tfoot td{padding:9px 11px;font-weight:700;color:var(--marinho);border-top:2px solid var(--azul)}
+table.bdt tfoot td:last-child{text-align:right}
+
+/* Plano de Ações no Boletim */
+.b-acao-item{background:var(--white);border-radius:var(--rsm);padding:12px 15px;box-shadow:0 2px 8px rgba(5,10,52,.07);border:1px solid var(--borda);margin-bottom:10px;page-break-inside:avoid;break-inside:avoid}
+.b-acao-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.b-acao-title{font-weight:600;font-size:13px}
+.b-acao-meta{font-size:11px;color:var(--cinza);font-weight:300;margin-bottom:4px}
+.b-acao-impacto{font-size:12px;color:#374151}
+
+/* IA / Causa Raiz */
+.ia-box{background:var(--white);border-radius:var(--r);padding:22px 20px;box-shadow:var(--sombra);border:2px solid var(--borda);page-break-inside:avoid;break-inside:avoid}
+.ia-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.ia-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ia-result{background:var(--suave);border-radius:var(--rsm);padding:16px;font-size:13px;color:#2D3748;line-height:1.75;font-weight:300;min-height:100px;white-space:pre-wrap;word-break:break-word}
+.ia-result strong{color:var(--marinho);font-weight:600}
+.ia-loading{display:flex;align-items:center;gap:10px;color:var(--cinza);font-size:13px;font-weight:300;padding:20px}
+.spinner{width:20px;height:20px;border:2px solid var(--borda);border-top-color:var(--azul);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ia-copy-btn{margin-top:10px}
+.api-key-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.api-key-row input{flex:1;min-width:200px;border:1px solid var(--borda);border-radius:var(--rsm);padding:7px 9px;font-family:'Poppins',sans-serif;font-size:12px;color:var(--marinho);background:#fff;outline:none}
+.api-key-row input:focus{border-color:var(--azul)}
+.api-note{font-size:11px;color:var(--cinza);font-weight:300;margin-bottom:12px}
+
+/* Rodapé */
+.b-footer{background:var(--marinho);color:rgba(255,255,255,.45);text-align:center;padding:16px;border-radius:var(--r) var(--r) 0 0;margin:30px -20px 0;font-size:11px;font-weight:300;page-break-inside:avoid;break-inside:avoid}
+.b-footer strong{color:var(--claro);font-weight:600}
+
+/* ============================================================ PDF MODE */
+body.pdf-mode #nav{display:none!important}
+body.pdf-mode .btn-pdf-float{display:none!important}
+body.pdf-mode #bol-wrap{max-width:100%;padding:0 5px 14px}
+body.pdf-mode .b-hdr{margin:0 0 20px;padding:30px 34px;border-radius:0 0 12px 12px}
+body.pdf-mode .b-footer{margin:18px 0 0;border-radius:8px 8px 0 0}
+body.pdf-mode .b-cards{grid-template-columns:repeat(4,1fr)}
+body.pdf-mode .b-cg{grid-template-columns:repeat(2,1fr)}
+body.pdf-mode .b-cias-grid{grid-template-columns:repeat(2,1fr)}
+body.pdf-mode .b-passos{grid-template-columns:repeat(3,1fr)}
+body.pdf-mode .bcw{height:180px}
+body.pdf-mode .b-sec{margin-bottom:20px}
+body.pdf-mode .ia-box{border:1px solid var(--borda)}
+
+/* ============================================================ AVOID BREAK */
+.avoid{page-break-inside:avoid!important;break-inside:avoid!important}
+
+/* ============================================================ MISC */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.section-hdr h2{font-size:16px;font-weight:700}
+.empty-msg{text-align:center;padding:30px;color:var(--cinza);font-size:12px;font-weight:300}
+.toast{position:fixed;bottom:80px;right:24px;z-index:9999;background:var(--marinho);color:#fff;padding:10px 18px;border-radius:50px;font-size:12px;font-weight:500;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* ============================================================ RESPONSIVO */
+@media(max-width:900px){
+  .ger-layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto}
+  .chart-row{grid-template-columns:1fr}
+  .b-cias-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .b-hdr{padding:26px 20px;margin:0 -20px 22px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  #nav{padding:0 12px}
+  .form-grid,.form-grid.tri{grid-template-columns:1fr}
+}
+@media print{.btn-pdf-float{display:none!important}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     NAV GLOBAL
+══════════════════════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Inadimplência <span>/ Sistema</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab on" onclick="setView('gerencial',this)">📊 Gerencial</button>
+    <button class="nav-tab" onclick="setView('boletim',this)">📄 Boletim</button>
+  </div>
+  <div class="nav-right" id="nav-ref"></div>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TELA GERENCIAL
+══════════════════════════════════════════════════════════ -->
+<div id="view-gerencial" class="view on">
+  <div class="ger-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">Menu</div>
+      <div class="s-section">
+        <div class="s-sec-title">Painéis</div>
+        <button class="s-btn on" onclick="setTab('painel',this)">📊 Painel Principal</button>
+        <button class="s-btn" onclick="setTab('devolucoes',this)">🔄 Devoluções</button>
+        <button class="s-btn" onclick="setTab('creditos',this)">💳 Créditos e Conciliação</button>
+      </div>
+      <div class="s-divider"></div>
+      <div class="s-section">
+        <div class="s-sec-title">Gestão</div>
+        <button class="s-btn" onclick="setTab('acoes',this)">📋 Plano de Ações</button>
+        <button class="s-btn" onclick="setTab('importar',this)">⬆️ Importar Dados</button>
+      </div>
+      <div class="s-divider"></div>
+      <div class="s-section">
+        <div class="s-sec-title">Exportar</div>
+        <button class="btn btn-green btn-sm" style="width:100%;justify-content:center" onclick="exportarExcel()">⬇️ Exportar Excel</button>
+        <div style="margin-top:8px"></div>
+        <button class="btn btn-amber btn-sm" style="width:100%;justify-content:center" onclick="gerarBoletim()">📄 Gerar Boletim</button>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="ger-main">
+
+      <!-- ── PAINEL PRINCIPAL ── -->
+      <div id="tab-painel" class="tab-content on">
+        <div class="section-hdr">
+          <h2>Painel Analítico</h2>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-outline btn-sm" onclick="limparFiltros()">✕ Limpar filtros</button>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filtros-bar">
+          <div class="fg"><label>Ano</label><select id="f-ano" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+          <div class="fg"><label>Mês</label><select id="f-mes" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+          <div class="fg"><label>CIA</label><select id="f-cia" onchange="aplicarFiltros()"><option value="">Todas</option></select></div>
+          <div class="fg"><label>Motivo</label><select id="f-motivo" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+          <div class="fg"><label>Setor</label><select id="f-setor" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+          <div class="fg"><label>Status</label><select id="f-status" onchange="aplicarFiltros()"><option value="">Todos</option></select></div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid" id="g-kpis"></div>
+
+        <!-- Gráficos Row 1 -->
+        <div class="chart-row">
+          <div class="chart-box"><div class="ct">Por CIA</div><div class="cd">Saldo por seguradora (com %)</div><div class="cw"><canvas id="gc-cia"></canvas></div></div>
+          <div class="chart-box"><div class="ct">Por Motivo</div><div class="cd">Saldo por motivo (com %)</div><div class="cw"><canvas id="gc-motivo"></canvas></div></div>
+        </div>
+
+        <!-- Gráficos Row 2 -->
+        <div class="chart-row">
+          <div class="chart-box"><div class="ct">Por Status</div><div class="cd">Distribuição com percentuais</div><div class="cw"><canvas id="gc-status"></canvas></div></div>
+          <div class="chart-box"><div class="ct">Evolução Mensal</div><div class="cd">Inadimplência por mês</div><div class="cw"><canvas id="gc-mes"></canvas></div></div>
+        </div>
+
+        <!-- Gráfico histórico -->
+        <div class="chart-box full" style="margin-bottom:14px">
+          <div class="ct">Histórico Anual — Faturamento × Inadimplência</div>
+          <div class="cd">Evolução histórica dos indicadores</div>
+          <div class="cw" style="height:250px"><canvas id="gc-hist"></canvas></div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="tbl-box">
+          <div class="tbl-hdr">
+            <h3>Registros Filtrados</h3>
+            <div class="tbl-hdr-r">
+              <span id="g-count" style="font-size:11px;color:var(--cinza);font-weight:300"></span>
+              <button class="btn btn-green btn-sm" onclick="exportarExcel()">⬇️ Excel</button>
+            </div>
+          </div>
+          <div class="t-scroll">
+            <table class="gt">
+              <thead><tr>
+                <th onclick="sortBy('ano')">Ano ↕</th>
+                <th onclick="sortBy('mes')">Mês ↕</th>
+                <th onclick="sortBy('cia')">CIA ↕</th>
+                <th onclick="sortBy('motivo')">Motivo ↕</th>
+                <th onclick="sortBy('setor')">Setor ↕</th>
+                <th onclick="sortBy('status')">Status ↕</th>
+                <th onclick="sortBy('valor')">Valor ↕</th>
+                <th>% do Total</th>
+                <th onclick="sortBy('creditoConciliar')">Crédito Conciliar ↕</th>
+                <th onclick="sortBy('valorRecuperado')">Recuperado ↕</th>
+              </tr></thead>
+              <tbody id="g-tbody"></tbody>
+              <tfoot><tr id="g-tfoot"></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div><!-- #tab-painel -->
+
+      <!-- ── DEVOLUÇÕES ── -->
+      <div id="tab-devolucoes" class="tab-content">
+        <div class="section-hdr"><h2>Devoluções — Detalhamento</h2></div>
+        <div class="kpi-grid" id="dev-kpis"></div>
+        <div class="chart-row" style="margin-top:14px">
+          <div class="chart-box"><div class="ct">Status de Coleta</div><div class="cd">Pendente / Em andamento / Concluída</div><div class="cw"><canvas id="gc-coleta"></canvas></div></div>
+          <div class="chart-box"><div class="ct">Eficiência Logística</div><div class="cd">Taxa de conclusão das coletas</div><div class="cw"><canvas id="gc-logistica"></canvas></div></div>
+        </div>
+        <div class="tbl-box" style="margin-top:14px">
+          <div class="tbl-hdr"><h3>Devoluções Detalhadas</h3></div>
+          <div class="t-scroll">
+            <table class="gt">
+              <thead><tr>
+                <th>Ano</th><th>Mês</th><th>CIA</th><th>Valor</th>
+                <th>Status Coleta</th><th>Saída Interna</th><th>Qtd Peças</th>
+              </tr></thead>
+              <tbody id="dev-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CRÉDITOS ── -->
+      <div id="tab-creditos" class="tab-content">
+        <div class="section-hdr"><h2>Créditos e Conciliação</h2></div>
+        <div class="kpi-grid" id="cred-kpis"></div>
+        <div class="chart-row" style="margin-top:14px">
+          <div class="chart-box"><div class="ct">Créditos por Setor</div><div class="cd">Distribuição do crédito a conciliar</div><div class="cw"><canvas id="gc-cred-setor"></canvas></div></div>
+          <div class="chart-box"><div class="ct">Créditos por CIA</div><div class="cd">Distribuição por seguradora</div><div class="cw"><canvas id="gc-cred-cia"></canvas></div></div>
+        </div>
+        <div class="tbl-box" style="margin-top:14px">
+          <div class="tbl-hdr"><h3>Detalhamento — Créditos</h3></div>
+          <div class="t-scroll">
+            <table class="gt">
+              <thead><tr><th>CIA</th><th>Setor</th><th>Crédito a Conciliar</th><th>Valor Recuperado</th><th>Status</th></tr></thead>
+              <tbody id="cred-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PLANO DE AÇÕES ── -->
+      <div id="tab-acoes" class="tab-content">
+        <div class="section-hdr"><h2>Plano de Ações</h2></div>
+        <div class="acoes-form">
+          <h3>➕ Nova Ação</h3>
+          <div class="form-grid tri">
+            <div class="form-field"><label>Descrição da Ação</label><input type="text" id="ac-desc" placeholder="Ex: Acionar Porto para os títulos de março"></div>
+            <div class="form-field"><label>Responsável</label><input type="text" id="ac-resp" placeholder="Ex: João Silva"></div>
+            <div class="form-field"><label>Prazo</label><input type="date" id="ac-prazo"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Impacto Esperado</label><input type="text" id="ac-impacto" placeholder="Ex: Reduzir R$ 200k da Porto em 30 dias"></div>
+            <div class="form-field"><label>Status</label>
+              <select id="ac-status">
+                <option value="Pendente">Pendente</option>
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluída">Concluída</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Semana de Referência</label>
+              <select id="ac-semana">
+                <option value="atual">Semana Atual</option>
+                <option value="proxima">Próxima Semana</option>
+              </select>
+            </div>
+            <div class="form-field" style="justify-content:flex-end">
+              <button class="btn btn-primary" onclick="adicionarAcao()" style="margin-top:auto">+ Adicionar Ação</button>
+            </div>
+          </div>
+        </div>
+        <div id="acoes-lista"></div>
+      </div>
+
+      <!-- ── IMPORTAR DADOS ── -->
+      <div id="tab-importar" class="tab-content">
+        <div class="section-hdr"><h2>Importar Dados do Excel</h2></div>
+
+        <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondrop="dropFile(event)" ondragleave="dragLeave(event)">
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="lerArquivo(event)">
+          <div class="upload-icon">📂</div>
+          <div class="upload-title">Clique ou arraste seu arquivo Excel aqui</div>
+          <div class="upload-desc">Formatos aceitos: .xlsx, .xls, .csv · O arquivo é lido localmente, sem envio para servidor</div>
+        </div>
+
+        <div id="mapa-area" style="display:none">
+          <div class="mapa-cols">
+            <h4>🔗 Mapeamento de Colunas</h4>
+            <p style="font-size:11px;color:var(--cinza);font-weight:300;margin-bottom:12px">Associe as colunas do seu Excel com os campos do sistema</p>
+            <div id="mapa-rows"></div>
+            <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-primary" onclick="confirmarImportacao()">✅ Confirmar Importação</button>
+              <button class="btn btn-outline" onclick="cancelarImportacao()">✕ Cancelar</button>
+              <button class="btn btn-outline" onclick="usarDadosExemplo()">🧪 Usar Dados de Exemplo</button>
+            </div>
+          </div>
+          <div class="mapa-cols" style="margin-top:12px">
+            <h4>👁️ Preview (primeiras 5 linhas)</h4>
+            <div class="preview-box" id="preview-box"></div>
+          </div>
+        </div>
+
+        <div id="import-status" style="margin-top:14px;display:none">
+          <div class="b-analise">
+            <strong id="import-msg"></strong>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <button class="btn btn-outline" onclick="usarDadosExemplo()">🧪 Usar Dados de Exemplo (sem upload)</button>
+        </div>
+
+        <div class="acoes-form" style="margin-top:14px">
+          <h3>📋 Estrutura esperada do Excel</h3>
+          <div class="preview-box">ano | mes | cia | motivo | setor | status | valor | creditoConciliar | valorRecuperado | statusColeta | saidaInterna | qtdePecasPendentes
+2026 | Janeiro | Porto | Cobrar CIA | Financeiro | Em aberto | 312540 | 0 | 0 | Concluída | false | 0
+2026 | Fevereiro | Allianz | Devolução | Logística | Pendente | 89000 | 15000 | 0 | Pendente | false | 12</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div><!-- #view-gerencial -->
+
+<!-- ══════════════════════════════════════════════════════════
+     TELA BOLETIM
+══════════════════════════════════════════════════════════ -->
+<div id="view-boletim" class="view">
+
+  <button class="btn-pdf-float" id="btn-pdf" onclick="gerarPDF()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg>
+    Baixar PDF
+  </button>
+
+  <div id="bol-wrap">
+
+    <!-- HEADER -->
+    <div class="b-hdr avoid">
+      <div class="bh-meta">
+        <div>
+          <span class="bh-badge">Relatório Executivo</span>
+          <h1>Boletim de Inadimplência</h1>
+          <p>Acompanhamento dos valores em aberto, evolução, causas e plano de ação</p>
+        </div>
+        <div class="bh-data">
+          <span>Atualizado em</span>
+          <strong id="b-data"></strong>
+          <span id="b-ref" style="display:block;font-size:11px;margin-top:1px"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 01 VISÃO GERAL -->
+    <div class="b-sec"><div class="b-stitle">01 — Visão Geral</div>
+      <div class="b-analise avoid" id="b-txt-geral"></div>
+      <div class="b-cards avoid" id="b-kpis"></div>
+    </div>
+
+    <!-- 02 POR ANO -->
+    <div class="b-sec"><div class="b-stitle">02 — Detalhamento por Ano</div>
+      <div class="b-analise avoid" id="b-txt-ano"></div>
+      <div class="b-cc avoid"><div class="bct">Inadimplência em Aberto por Ano</div><div class="bcd">Saldo acumulado por exercício</div><div class="bcw"><canvas id="b-gAnos"></canvas></div></div>
+    </div>
+
+    <!-- 03 MENSAL -->
+    <div class="b-sec"><div class="b-stitle">03 — Evolução Mensal</div>
+      <div class="b-analise avoid" id="b-txt-mes"></div>
+      <div class="b-cc avoid"><div class="bct">Nova Inadimplência — Mensal</div><div class="bcd">Valor gerado por mês a partir de 22/10/2025</div><div class="bcw"><canvas id="b-gMeses"></canvas></div></div>
+    </div>
+
+    <!-- 04 CAUSAS -->
+    <div class="b-sec"><div class="b-stitle">04 — Causas e Setores</div>
+      <div class="b-analise avoid" id="b-txt-causas"></div>
+      <div class="b-cg avoid">
+        <div class="b-cc"><div class="bct">Cauda Histórica — por Categoria</div><div class="bcd">Distribuição com percentuais</div><div class="bcw"><canvas id="b-gCausas"></canvas></div></div>
+        <div class="b-cc"><div class="bct">Nova Inadimplência — por Status</div><div class="bcd">Composição por grupo de tratativa</div><div class="bcw"><canvas id="b-gNova"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- 05 DEVOLUÇÕES -->
+    <div class="b-sec"><div class="b-stitle">05 — Atualizações — Devoluções</div>
+      <div class="b-analise avoid" id="b-txt-dev"></div>
+      <div class="b-cards avoid" id="b-dev-cards" style="margin-bottom:13px"></div>
+      <div class="b-cg avoid" style="margin-bottom:12px">
+        <div class="b-cc"><div class="bct">Composição das Devoluções</div><div class="bcd">Distribuição por subcategoria (com %)</div><div class="bcw"><canvas id="b-gDev"></canvas></div></div>
+        <div class="b-dev-tbl">
+          <div class="bct" style="margin-bottom:10px">Detalhamento — Devoluções</div>
+          <table class="bdt"><thead><tr><th>Subcategoria</th><th>Status</th><th>Valor</th></tr></thead><tbody id="b-dev-tbody"></tbody><tfoot id="b-dev-tfoot"></tfoot></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 CIAs -->
+    <div class="b-sec"><div class="b-stitle">06 — Principais CIAs Ofensoras</div>
+      <div class="b-analise avoid" id="b-txt-cias"></div>
+      <div class="b-cias-grid avoid">
+        <div class="b-cias-box"><div class="bct" style="margin-bottom:11px">Ranking de Exposição</div><div id="b-cias-lista"></div></div>
+        <div class="b-cc"><div class="bct">CIAs — Saldo em Aberto (com %)</div><div class="bcd">Barras horizontais por seguradora</div><div class="bcw"><canvas id="b-gCias"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- 07 HISTÓRICO -->
+    <div class="b-sec"><div class="b-stitle">07 — Evolução Histórica</div>
+      <div class="b-analise avoid" id="b-txt-hist"></div>
+      <div class="b-cc full avoid"><div class="bct">Inadimplência × Faturamento (2020–2025)</div><div class="bcd">Taxa de inadimplência e % pago no prazo por exercício</div><div class="bcw" style="height:260px"><canvas id="b-gHist"></canvas></div></div>
+    </div>
+
+    <!-- 08 PLANO DE AÇÕES -->
+    <div class="b-sec"><div class="b-stitle">08 — Plano de Ações da Semana</div>
+      <div class="b-analise avoid" id="b-txt-acoes-header"></div>
+      <div id="b-acoes-lista"></div>
+      <div style="margin-top:16px"><div class="b-stitle" style="margin-bottom:10px">Resultados e Impactos</div>
+      <div id="b-impactos"></div></div>
+    </div>
+
+    <!-- 09 PRÓXIMOS PASSOS -->
+    <div class="b-sec"><div class="b-stitle">09 — Próximos Passos</div>
+      <div class="b-passos avoid" id="b-passos"></div>
+    </div>
+
+    <!-- 10 CAUSA RAIZ IA -->
+    <div class="b-sec"><div class="b-stitle">10 — Insights e Causa Raiz — Análise IA</div>
+      <div class="ia-box avoid">
+        <div class="ia-header">
+          <div class="ia-title">🤖 Análise Gerada por IA</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-violet" onclick="gerarAnaliseIA()">✨ Gerar análise com IA</button>
+            <button class="btn btn-outline btn-sm" onclick="copiarIA()">📋 Copiar</button>
+          </div>
+        </div>
+        <div class="api-note">A análise usa a API do Claude. Insira sua chave abaixo (armazenada apenas nesta sessão, nunca enviada a terceiros).</div>
+        <div class="api-key-row">
+          <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off">
+          <button class="btn btn-outline btn-sm" onclick="toggleApiKey()">👁️</button>
+          <span style="font-size:11px;color:var(--cinza);font-weight:300">Chave salva na sessão</span>
+        </div>
+        <div id="ia-result" class="ia-result" style="color:var(--cinza);font-size:12px">
+          Clique em "Gerar análise com IA" para que o Claude analise os dados de inadimplência e sugira causas raiz, padrões e recomendações priorizadas.
+        </div>
+        <div id="ia-copy-wrap" style="display:none;margin-top:8px">
+          <button class="btn btn-outline btn-sm ia-copy-btn" onclick="copiarIA()">📋 Copiar análise</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <div class="b-footer avoid">
+      <p>Boletim Executivo de Inadimplência — <strong>Confidencial</strong> — Gerado em <strong id="b-footer-data"></strong></p>
+    </div>
+
+  </div>
+</div><!-- #view-boletim -->
+
+<script>
+/* ================================================================
+   ╔══════════════════════════════════════════════════════╗
+   ║    ÁREA DE DADOS — ALTERE AQUI MÊS A MÊS            ║
+   ╚══════════════════════════════════════════════════════╝
+================================================================ */
+const dadosRelatorio = {
+
+  mesReferencia: "Maio / 2026",
+
+  /* ── RESUMO (boletim – cards consolidados) ─── */
+  resumo: {
+    totalGeral:        12786352.67,
+    cauda:              7259326.23,
+    novaInadimplencia:  5527026.44,
+    creditosConciliar:  1160247.38,
+    valorCobrar:        4530123.20,
+    recuperado:         3010071.87,
+    percRecuperado:     66.45,
+  },
+
+  /* ── POR ANO ─────────────────────────────── */
+  porAno: [
+    {ano:2020,valor:  67497.40},
+    {ano:2021,valor: 237802.35},
+    {ano:2022,valor: 673353.52},
+    {ano:2023,valor:1907629.85},
+    {ano:2024,valor:2396194.53},
+    {ano:2025,valor:1976848.58},
+  ],
+
+  /* ── MESES ───────────────────────────────── */
+  meses2026: [
+    {mes:"Nov/25",valor: 297188.09},
+    {mes:"Dez/25",valor: 326386.46},
+    {mes:"Jan/26",valor: 804073.35},
+    {mes:"Fev/26",valor: 358418.14},
+    {mes:"Mar/26",valor: 685743.79},
+    {mes:"Abr/26",valor:1461278.06},
+    {mes:"Mai/26",valor:1593938.55},
+  ],
+
+  /* ── CAUSAS HISTÓRICAS ───────────────────── */
+  causas: [
+    {nome:"Analisar",              valor:2240945.43},
+    {nome:"Cobrar CIA",            valor:2219927.64},
+    {nome:"Refaturamento Oficina", valor:1425350.97},
+    {nome:"Devolução",             valor:1323191.33},
+    {nome:"Trat. Financeiras",     valor:  43586.07},
+    {nome:"Trat. da Ilha",         valor:  35140.65},
+  ],
+
+  /* ── STATUS NOVA ─────────────────────────── */
+  statusNova: [
+    {nome:"Cobrar CIA",valor:2429013.19},
+    {nome:"Devolução", valor:1732451.99},
+    {nome:"Erechim",   valor: 596140.61},
+    {nome:"Analisar",  valor: 441074.53},
+    {nome:"Ilha",      valor: 249381.68},
+    {nome:"Financeiro",valor: 196196.36},
+  ],
+
+  /* ── DEVOLUÇÕES ──────────────────────────── */
+  devolucoes: {
+    itens:[
+      {sub:"Devoluções Inadimplentes", status:"Inadimplente",valor:0},
+      {sub:"Boleto Oficina",           status:"Pendente",    valor:0},
+      {sub:"Devoluções em Andamento",  status:"Em Andamento",valor:0},
+      {sub:"Falta Coleta — Logística", status:"Aguardando",  valor:0},
+      {sub:"Demais em Andamento",      status:"Em Andamento",valor:0},
+    ],
+    analise:`O motivo <strong>Devoluções</strong> concentra parte relevante da inadimplência. Acompanhe separadamente o que depende de regularização operacional, boleto oficina, coleta logística ou conclusão de tratativas. Preencha os valores no bloco <em>devolucoes</em> para ativar os indicadores.`,
+  },
+
+  /* ── CIAs ────────────────────────────────── */
+  cias:[
+    {nome:"Porto",   valor:1719534.56},
+    {nome:"Allianz", valor:1153358.67},
+    {nome:"Bradesco",valor: 631172.93},
+    {nome:"Zurich",  valor: 418176.94},
+    {nome:"Mapfre",  valor: 337018.51},
+    {nome:"HDI",     valor: 197142.51},
+    {nome:"Azul",    valor: 168163.36},
+    {nome:"Liberty", valor: 151771.14},
+    {nome:"Tokio",   valor: 146013.80},
+    {nome:"Yelum",   valor: 139447.48},
+  ],
+
+  /* ── HISTÓRICO ───────────────────────────── */
+  historico:[
+    {ano:2020,faturamento: 40661896.94,pagosNoPrazo:79.93,inadimplencia: 3.49},
+    {ano:2021,faturamento: 53392140.75,pagosNoPrazo:70.18,inadimplencia:10.73},
+    {ano:2022,faturamento: 62268751.61,pagosNoPrazo:71.62,inadimplencia: 9.50},
+    {ano:2023,faturamento: 73196268.56,pagosNoPrazo:69.04,inadimplencia:15.77},
+    {ano:2024,faturamento: 96811379.40,pagosNoPrazo:70.12,inadimplencia: 6.25},
+    {ano:2025,faturamento:116580509.36,pagosNoPrazo:76.78,inadimplencia: 6.05},
+  ],
+
+  /* ── TEXTOS DO BOLETIM ───────────────────── */
+  textos:{
+    geral:  `A inadimplência atual totaliza <strong>R$ 12,8 milhões</strong>, composta por valores históricos (cauda) e nova inadimplência gerada após 22/10/2025. A separação permite acompanhar a efetividade das ações e o ritmo de recuperação.`,
+    ano:    `Concentração elevada em <strong>2023, 2024 e 2025</strong>, demonstrando necessidade de atuação prioritária sobre títulos recentes com maior potencial de recuperação.`,
+    mes:    `Aceleração observada em <strong>Abril e Maio/2026</strong> demanda atenção imediata sobre a geração de nova inadimplência nesse período.`,
+    causas: `Cobrança junto às CIAs, devoluções e refaturamentos concentram o maior saldo. Esses grupos são <strong>prioridade na rotina de acompanhamento semanal</strong>.`,
+    cias:   `O ranking por CIA direciona ações para os parceiros com maior impacto financeiro, priorizando casos com <strong>maior potencial de recuperação imediata</strong>.`,
+    hist:   `Pico de inadimplência em <strong>2023 (15,77%)</strong>, reduzido a 6,05% em 2025. O histórico valida a efetividade das ações implementadas no período.`,
+  },
+
+  /* ── PRÓXIMOS PASSOS ─────────────────────── */
+  passos:[
+    "Criar rotina semanal de acompanhamento da nova inadimplência.",
+    "Priorizar CIAs com maior saldo em aberto (Porto, Allianz, Bradesco).",
+    "Acompanhar cauda histórica e nova inadimplência separadamente.",
+    "Conciliar créditos pendentes (R$ 1,16 mi).",
+    "Definir responsáveis por status/motivo.",
+    "Criar meta mensal de recuperação e medir impacto das ações.",
+  ],
+
+  /* ── PROMPT PARA ANÁLISE IA ──────────────────────────
+     Personalize o raciocínio que o Claude vai aplicar.
+     Adicione aqui as regras do seu negócio.
+  ─────────────────────────────────────────────────── */
+  promptCausaRaiz:`Você é um especialista em gestão de inadimplência e contas a receber de uma empresa de serviços automotivos/seguros.
+Analise os dados de inadimplência abaixo e gere um relatório executivo com:
+
+1. **Principais padrões identificados** — concentração por CIA, motivo e período
+2. **Hipóteses de causa raiz** — por CIA, motivo e setor, com argumentação
+3. **Correlações relevantes** — relações entre variáveis que merecem atenção
+4. **Recomendações priorizadas** — ações concretas ordenadas por impacto estimado
+5. **Alertas** — tendências de piora que exigem ação imediata
+6. **Pontos positivos** — o que está funcionando bem e deve ser mantido
+
+Regras de negócio a considerar:
+- Inadimplência acima de 60 dias = crítica, prioridade máxima
+- CIAs com saldo > R$ 500k = foco de negociação especial
+- Devoluções pendentes de coleta = risco de custo adicional (saída interna)
+- Meta de recuperação: 70% ao mês
+
+Seja direto, executivo e prático. Use dados específicos para embasar cada afirmação.`,
+
+  /* ── DETALHES GRANULARES ──────────────────────────────
+     ⚠️ SUBSTITUIR ESTA BASE DE EXEMPLO PELA BASE REAL.
+     Exporte do Excel/Power BI e cole aqui, ou use upload.
+  ─────────────────────────────────────────────────── */
+  detalhes:[
+    {ano:"2024",mes:"Janeiro",  cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:312540,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Janeiro",  cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:198230,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Fevereiro",cia:"Porto",   motivo:"Devolução",            setor:"Logística", valor:145800,creditoConciliar:8000,valorRecuperado:0,  status:"Em aberto",  statusColeta:"Pendente",   saidaInterna:false,qtdePecasPendentes:5},
+    {ano:"2024",mes:"Fevereiro",cia:"Bradesco",motivo:"Analisar",             setor:"Financeiro",valor: 87400,creditoConciliar:0,  valorRecuperado:0,  status:"Em análise", statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Março",    cia:"Zurich",  motivo:"Refaturamento Oficina",setor:"Oficina",   valor:203110,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Em andamento",saidaInterna:false,qtdePecasPendentes:3},
+    {ano:"2024",mes:"Março",    cia:"Mapfre",  motivo:"Cobrar CIA",           setor:"Financeiro",valor: 95600,creditoConciliar:0,  valorRecuperado:0,  status:"Em negoc.",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Abril",    cia:"HDI",     motivo:"Devolução",            setor:"Logística", valor:118700,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Pendente",   saidaInterna:true, qtdePecasPendentes:8},
+    {ano:"2024",mes:"Abril",    cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:289000,creditoConciliar:0,  valorRecuperado:89000,status:"Em aberto",statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Maio",     cia:"Allianz", motivo:"Analisar",             setor:"Financeiro",valor:132000,creditoConciliar:12000,valorRecuperado:0, status:"Em análise", statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2024",mes:"Junho",    cia:"Bradesco",motivo:"Cobrar CIA",           setor:"Financeiro",valor:178500,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Janeiro",  cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:421000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Janeiro",  cia:"Allianz", motivo:"Devolução",            setor:"Logística", valor:155000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Em andamento",saidaInterna:false,qtdePecasPendentes:4},
+    {ano:"2025",mes:"Fevereiro",cia:"Zurich",  motivo:"Analisar",             setor:"Financeiro",valor: 98700,creditoConciliar:0,  valorRecuperado:0,  status:"Em análise", statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Março",    cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:312000,creditoConciliar:0,  valorRecuperado:120000,status:"Em aberto",statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Março",    cia:"Mapfre",  motivo:"Refaturamento Oficina",setor:"Oficina",   valor:187400,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Abril",    cia:"HDI",     motivo:"Cobrar CIA",           setor:"Financeiro",valor: 97200,creditoConciliar:0,  valorRecuperado:0,  status:"Em negoc.",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Maio",     cia:"Bradesco",motivo:"Devolução",            setor:"Logística", valor:143000,creditoConciliar:5000,valorRecuperado:0,  status:"Em aberto",  statusColeta:"Pendente",   saidaInterna:true, qtdePecasPendentes:6},
+    {ano:"2025",mes:"Junho",    cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:267800,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Outubro",  cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:456000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Novembro", cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:312000,creditoConciliar:0,  valorRecuperado:45000,status:"Em aberto",statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2025",mes:"Dezembro", cia:"Mapfre",  motivo:"Refaturamento Oficina",setor:"Oficina",   valor:178000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Janeiro",  cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:398000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Janeiro",  cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:211000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Janeiro",  cia:"Bradesco",motivo:"Devolução",            setor:"Logística", valor: 95000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Em andamento",saidaInterna:false,qtdePecasPendentes:3},
+    {ano:"2026",mes:"Fevereiro",cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:158000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Fevereiro",cia:"Zurich",  motivo:"Analisar",             setor:"Financeiro",valor: 87400,creditoConciliar:5000,valorRecuperado:0,  status:"Em análise", statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Março",    cia:"Mapfre",  motivo:"Cobrar CIA",           setor:"Financeiro",valor:201000,creditoConciliar:0,  valorRecuperado:0,  status:"Em negoc.",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Março",    cia:"Porto",   motivo:"Refaturamento Oficina",setor:"Oficina",   valor:312000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Abril",    cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:587000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Abril",    cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:398000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Abril",    cia:"Bradesco",motivo:"Devolução",            setor:"Logística", valor:218000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Pendente",   saidaInterna:true, qtdePecasPendentes:11},
+    {ano:"2026",mes:"Maio",     cia:"Porto",   motivo:"Cobrar CIA",           setor:"Financeiro",valor:612000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Maio",     cia:"Allianz", motivo:"Cobrar CIA",           setor:"Financeiro",valor:412000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+    {ano:"2026",mes:"Maio",     cia:"HDI",     motivo:"Devolução",            setor:"Logística", valor:187000,creditoConciliar:0,  valorRecuperado:0,  status:"Em aberto",  statusColeta:"Pendente",   saidaInterna:false,qtdePecasPendentes:7},
+    {ano:"2026",mes:"Maio",     cia:"Zurich",  motivo:"Analisar",             setor:"Financeiro",valor: 98000,creditoConciliar:4000,valorRecuperado:0,  status:"Em análise", statusColeta:"Concluída",  saidaInterna:false,qtdePecasPendentes:0},
+  ],
+
+}; /* ═══════════ FIM DA ÁREA DE DADOS ═══════════ */
+
+
+/* ================================================================
+   UTILIDADES
+================================================================ */
+const fmt  = v=>v==null?"—":"R$ "+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtM = v=>{v=Number(v)||0;if(v>=1e6)return"R$ "+(v/1e6).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+" mi";if(v>=1e3)return"R$ "+(v/1e3).toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+" mil";if(v===0)return"R$ 0,00";return fmt(v)};
+const fmtP = v=>Number(v).toFixed(1)+"%";
+const fmtN = v=>Number(v).toLocaleString("pt-BR");
+
+const COR=["#0A64FF","#2021D4","#3B82F6","#73C6FF","#1E40AF","#60A5FA","#93C5FD","#050A34","#1D4ED8","#BFDBFE"];
+
+const CHARTS={};
+function mkChart(id,cfg){if(CHARTS[id])CHARTS[id].destroy();CHARTS[id]=new Chart(document.getElementById(id),cfg);return CHARTS[id]}
+
+Chart.defaults.font.family="'Poppins',sans-serif";
+Chart.defaults.color="#6B7280";
+Chart.defaults.plugins.tooltip.padding=9;
+Chart.defaults.plugins.tooltip.cornerRadius=8;
+
+/* ================================================================
+   ESTADO
+================================================================ */
+let dadosFiltrados=[...dadosRelatorio.detalhes];
+let sortKey="valor",sortAsc=false;
+let planilhaRaw=null,colunasDetectadas=[];
+let planoAcoes=JSON.parse(localStorage.getItem("plano_acoes")||"[]");
+
+/* ================================================================
+   NAVEGAÇÃO GLOBAL
+================================================================ */
+function setView(v,el){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".nav-tab").forEach(x=>x.classList.remove("on"));
+  document.getElementById("view-"+v).classList.add("on");
+  if(el)el.classList.add("on");
+  const pdf=document.getElementById("btn-pdf");
+  if(pdf)pdf.style.display=v==="boletim"?"flex":"none";
+}
+
+function setTab(t,el){
+  document.querySelectorAll(".tab-content").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".s-btn").forEach(x=>x.classList.remove("on"));
+  const tc=document.getElementById("tab-"+t);
+  if(tc)tc.classList.add("on");
+  if(el)el.classList.add("on");
+  // Inicializa sub-painéis ao abrir
+  if(t==="devolucoes")renderDevolucoes();
+  if(t==="creditos")renderCreditos();
+  if(t==="acoes")renderAcoesList();
+}
+
+/* ================================================================
+   TOAST
+================================================================ */
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* ================================================================
+   FILTROS — GERENCIAL
+================================================================ */
+function uniqVals(key){return[...new Set(dadosRelatorio.detalhes.map(d=>d[key]))].sort()}
+function popularSelects(){
+  const mp={"f-ano":"ano","f-mes":"mes","f-cia":"cia","f-motivo":"motivo","f-setor":"setor","f-status":"status"};
+  Object.entries(mp).forEach(([id,key])=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML=`<option value="">Todos</option>`+uniqVals(key).map(v=>`<option value="${v}">${v}</option>`).join("");
+    if(cur)el.value=cur;
+  });
+}
+
+function getFiltros(){
+  const g=id=>document.getElementById(id)?.value||"";
+  return{ano:g("f-ano"),mes:g("f-mes"),cia:g("f-cia"),motivo:g("f-motivo"),setor:g("f-setor"),status:g("f-status")};
+}
+
+function aplicarFiltros(){
+  const f=getFiltros();
+  dadosFiltrados=dadosRelatorio.detalhes.filter(d=>
+    (!f.ano||d.ano===f.ano)&&(!f.mes||d.mes===f.mes)&&(!f.cia||d.cia===f.cia)&&
+    (!f.motivo||d.motivo===f.motivo)&&(!f.setor||d.setor===f.setor)&&(!f.status||d.status===f.status)
+  );
+  dadosFiltrados.sort((a,b)=>{
+    const va=a[sortKey],vb=b[sortKey];
+    if(typeof va==="number")return sortAsc?va-vb:vb-va;
+    return sortAsc?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
+  });
+  renderPainel();
+}
+
+function limparFiltros(){
+  ["f-ano","f-mes","f-cia","f-motivo","f-setor","f-status"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=""});
+  aplicarFiltros();
+}
+
+function sortBy(key){if(sortKey===key)sortAsc=!sortAsc;else{sortKey=key;sortAsc=false;}aplicarFiltros()}
+
+/* ================================================================
+   RENDER — PAINEL PRINCIPAL
+================================================================ */
+function renderPainel(){
+  const data=dadosFiltrados;
+  const total=data.reduce((s,d)=>s+d.valor,0);
+  const totalCredito=data.reduce((s,d)=>s+(d.creditoConciliar||0),0);
+  const totalRec=data.reduce((s,d)=>s+(d.valorRecuperado||0),0);
+  const cnt=data.length;
+
+  // KPIs
+  const maiorCIA=Object.entries(data.reduce((a,d)=>{a[d.cia]=(a[d.cia]||0)+d.valor;return a},{})).sort((a,b)=>b[1]-a[1])[0];
+  const kpiItems=[
+    {l:"Total Filtrado",v:fmtM(total),i:"💰",c:"dk"},
+    {l:"Registros",v:fmtN(cnt),i:"📋",c:""},
+    {l:"Crédito Conciliar",v:fmtM(totalCredito),i:"🔄",c:"am"},
+    {l:"Recuperado",v:fmtM(totalRec),i:"✅",c:"gr"},
+    {l:"% Recuperado",v:total?fmtP(totalRec/total*100):"0%",i:"📈",c:"gr"},
+    {l:"Maior CIA",v:maiorCIA?maiorCIA[0]:"—",i:"🏢",c:""},
+    {l:"Valor Maior CIA",v:maiorCIA?fmtM(maiorCIA[1]):"—",i:"⚠️",c:"am"},
+  ];
+  document.getElementById("g-kpis").innerHTML=kpiItems.map(k=>
+    `<div class="kpi ${k.c}"><div class="kicon">${k.i}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div></div>`
+  ).join("");
+
+  // Agrupamentos
+  const grp=(key)=>{const a={};data.forEach(d=>{a[d[key]]=(a[d[key]]||0)+d.valor;});return Object.entries(a).sort((a,b)=>b[1]-a[1])};
+  const byCia=grp("cia"),byMot=grp("motivo"),byStatus=grp("status"),byMes=grp("mes");
+
+  // CIA — barras horizontais
+  mkChart("gc-cia",{type:"bar",data:{labels:byCia.map(x=>x[0]),datasets:[{label:"Valor",data:byCia.map(x=>x[1]),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)}  (${fmtP(total?c.raw/total*100:0)})`}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  // Motivo — barras horizontais
+  mkChart("gc-motivo",{type:"bar",data:{labels:byMot.map(x=>x[0]),datasets:[{label:"Valor",data:byMot.map(x=>x[1]),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)}  (${fmtP(total?c.raw/total*100:0)})`}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  // Status — rosca com %
+  mkChart("gc-status",{type:"doughnut",data:{labels:byStatus.map(x=>x[0]),datasets:[{data:byStatus.map(x=>x[1]),backgroundColor:COR,borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{position:"bottom",labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)} (${fmtP(total?c.raw/total*100:0)})`}}}}});
+
+  // Mês — barras verticais
+  mkChart("gc-mes",{type:"bar",data:{labels:byMes.map(x=>x[0]),datasets:[{label:"Valor",data:byMes.map(x=>x[1]),backgroundColor:"#0A64FF",borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)}  (${fmtP(total?c.raw/total*100:0)})`}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}}}}});
+
+  // Histórico
+  const h=dadosRelatorio.historico;
+  mkChart("gc-hist",{type:"bar",data:{labels:h.map(x=>x.ano),datasets:[{type:"line",label:"% Inadimplência",data:h.map(x=>x.inadimplencia),borderColor:"#0A64FF",backgroundColor:"rgba(10,100,255,0.07)",fill:true,tension:.4,yAxisID:"yP",pointBackgroundColor:"#0A64FF",pointRadius:5},{type:"line",label:"% Pago no Prazo",data:h.map(x=>x.pagosNoPrazo),borderColor:"#22C55E",backgroundColor:"transparent",borderDash:[5,3],tension:.4,yAxisID:"yP",pointBackgroundColor:"#22C55E",pointRadius:5},{type:"bar",label:"Faturamento",data:h.map(x=>x.faturamento),backgroundColor:"rgba(115,198,255,0.22)",borderRadius:5,yAxisID:"yV",order:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label==="Faturamento"?"Fat.: "+fmt(c.raw):c.dataset.label+": "+c.raw.toFixed(2)+"%"}}},scales:{yP:{type:"linear",position:"left",ticks:{callback:v=>v+"%"},grid:{color:"rgba(0,0,0,0.04)"},max:100},yV:{type:"linear",position:"right",ticks:{callback:v=>"R$ "+(v/1e6).toFixed(0)+"M"},grid:{display:false}},x:{grid:{display:false}}}}});
+
+  // Tabela
+  const SHOW=200;
+  document.getElementById("g-count").textContent=`${cnt} registros · Total: ${fmt(total)}`;
+  document.getElementById("g-tbody").innerHTML=data.slice(0,SHOW).map(d=>{
+    const p=total?d.valor/total*100:0;
+    return`<tr>
+      <td>${d.ano}</td><td>${d.mes}</td><td><strong>${d.cia}</strong></td>
+      <td>${d.motivo}</td><td>${d.setor||"—"}</td>
+      <td><span class="badge badge-blue">${d.status}</span></td>
+      <td>${fmt(d.valor)}</td>
+      <td><div class="pbar-wrap"><div class="pbar"><div class="pbar-f" style="width:${Math.min(p,100).toFixed(1)}%"></div></div><span style="font-size:10px;font-weight:600;color:var(--azul);min-width:34px">${fmtP(p)}</span></div></td>
+      <td>${d.creditoConciliar?fmt(d.creditoConciliar):"—"}</td>
+      <td>${d.valorRecuperado?fmt(d.valorRecuperado):"—"}</td>
+    </tr>`;
+  }).join("")+(data.length>SHOW?`<tr><td colspan="10" class="empty-msg">Exibindo ${SHOW} de ${data.length} registros</td></tr>`:"");
+  document.getElementById("g-tfoot").innerHTML=`<td colspan="6"><strong>Total</strong></td><td><strong>${fmt(total)}</strong></td><td><strong>100%</strong></td><td><strong>${fmt(totalCredito)}</strong></td><td><strong>${fmt(totalRec)}</strong></td>`;
+}
+
+/* ================================================================
+   RENDER — DEVOLUÇÕES
+================================================================ */
+function renderDevolucoes(){
+  const data=dadosRelatorio.detalhes.filter(d=>d.motivo==="Devolução");
+  const total=data.reduce((s,d)=>s+d.valor,0);
+  const pendente=data.filter(d=>d.statusColeta==="Pendente").length;
+  const andamento=data.filter(d=>d.statusColeta==="Em andamento").length;
+  const concluida=data.filter(d=>d.statusColeta==="Concluída").length;
+  const saidaInterna=data.filter(d=>d.saidaInterna).length;
+  const pecasPendentes=data.reduce((s,d)=>s+(d.qtdePecasPendentes||0),0);
+  const eficiencia=data.length?concluida/data.length*100:0;
+
+  document.getElementById("dev-kpis").innerHTML=[
+    {l:"Total Devoluções",   v:fmtM(total),         i:"🔄",c:"dk"},
+    {l:"Pendente Coleta",    v:fmtN(pendente),       i:"⏳",c:"am"},
+    {l:"Em Andamento",       v:fmtN(andamento),      i:"🚚",c:""},
+    {l:"Concluídas",         v:fmtN(concluida),      i:"✅",c:"gr"},
+    {l:"Saídas Internas",    v:fmtN(saidaInterna),   i:"⚠️",c:"rd"},
+    {l:"Peças Pendentes",    v:fmtN(pecasPendentes), i:"📦",c:"am"},
+    {l:"Eficiência Logística",v:fmtP(eficiencia),   i:"📊",c:eficiencia>=70?"gr":"rd"},
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kicon">${k.i}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div></div>`).join("");
+
+  mkChart("gc-coleta",{type:"doughnut",data:{labels:["Pendente","Em andamento","Concluída"],datasets:[{data:[pendente,andamento,concluida],backgroundColor:["#F59E0B","#3B82F6","#16a34a"],borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{position:"bottom",labels:{font:{size:11},padding:10}},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} (${fmtP(data.length?c.raw/data.length*100:0)})`}}}}});
+
+  mkChart("gc-logistica",{type:"bar",data:{labels:["Pendente","Em andamento","Concluída"],datasets:[{label:"Qtd",data:[pendente,andamento,concluida],backgroundColor:["#F59E0B","#3B82F6","#16a34a"],borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>Math.round(v)},grid:{color:"rgba(0,0,0,0.04)"}}}}});
+
+  document.getElementById("dev-tbody").innerHTML=data.map(d=>
+    `<tr><td>${d.ano}</td><td>${d.mes}</td><td><strong>${d.cia}</strong></td><td>${fmt(d.valor)}</td>
+    <td><span class="badge ${d.statusColeta==="Concluída"?"badge-green":d.statusColeta==="Pendente"?"badge-amber":"badge-blue"}">${d.statusColeta}</span></td>
+    <td>${d.saidaInterna?'<span class="badge badge-red">Sim</span>':'—'}</td>
+    <td>${d.qtdePecasPendentes||0}</td></tr>`
+  ).join("")||`<tr><td colspan="7" class="empty-msg">Nenhuma devolução encontrada</td></tr>`;
+}
+
+/* ================================================================
+   RENDER — CRÉDITOS
+================================================================ */
+function renderCreditos(){
+  const data=dadosRelatorio.detalhes.filter(d=>(d.creditoConciliar||0)>0);
+  const total=data.reduce((s,d)=>s+(d.creditoConciliar||0),0);
+  const totalRec=dadosRelatorio.detalhes.reduce((s,d)=>s+(d.valorRecuperado||0),0);
+  const byCia=Object.entries(data.reduce((a,d)=>{a[d.cia]=(a[d.cia]||0)+(d.creditoConciliar||0);return a},{})).sort((a,b)=>b[1]-a[1]);
+  const bySetor=Object.entries(data.reduce((a,d)=>{a[d.setor||"N/D"]=(a[d.setor||"N/D"]||0)+(d.creditoConciliar||0);return a},{})).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById("cred-kpis").innerHTML=[
+    {l:"Total a Conciliar",v:fmtM(total),    i:"💳",c:"dk"},
+    {l:"Registros c/ Crédito",v:fmtN(data.length),i:"📋",c:""},
+    {l:"Total Recuperado",v:fmtM(totalRec),  i:"✅",c:"gr"},
+    {l:"CIAs com Crédito",v:fmtN(byCia.length),i:"🏢",c:"am"},
+  ].map(k=>`<div class="kpi ${k.c}"><div class="kicon">${k.i}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div></div>`).join("");
+
+  mkChart("gc-cred-setor",{type:"bar",data:{labels:bySetor.map(x=>x[0]),datasets:[{label:"Crédito",data:bySetor.map(x=>x[1]),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+  mkChart("gc-cred-cia",{type:"bar",data:{labels:byCia.map(x=>x[0]),datasets:[{label:"Crédito",data:byCia.map(x=>x[1]),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  document.getElementById("cred-tbody").innerHTML=data.map(d=>
+    `<tr><td><strong>${d.cia}</strong></td><td>${d.setor||"—"}</td><td>${fmt(d.creditoConciliar)}</td><td>${fmt(d.valorRecuperado)}</td><td><span class="badge badge-blue">${d.status}</span></td></tr>`
+  ).join("")||`<tr><td colspan="5" class="empty-msg">Nenhum crédito pendente encontrado</td></tr>`;
+}
+
+/* ================================================================
+   PLANO DE AÇÕES — CRUD
+================================================================ */
+function salvarAcoes(){localStorage.setItem("plano_acoes",JSON.stringify(planoAcoes))}
+
+function adicionarAcao(){
+  const desc=document.getElementById("ac-desc").value.trim();
+  if(!desc){toast("⚠️ Informe a descrição da ação");return}
+  planoAcoes.push({
+    id:Date.now(),
+    desc,
+    resp:document.getElementById("ac-resp").value.trim(),
+    prazo:document.getElementById("ac-prazo").value,
+    impacto:document.getElementById("ac-impacto").value.trim(),
+    status:document.getElementById("ac-status").value,
+    semana:document.getElementById("ac-semana").value,
+  });
+  salvarAcoes();
+  ["ac-desc","ac-resp","ac-prazo","ac-impacto"].forEach(id=>document.getElementById(id).value="");
+  renderAcoesList();
+  toast("✅ Ação adicionada");
+}
+
+function removerAcao(id){planoAcoes=planoAcoes.filter(a=>a.id!==id);salvarAcoes();renderAcoesList()}
+function toggleStatusAcao(id){const a=planoAcoes.find(x=>x.id===id);if(a){a.status=a.status==="Concluída"?"Pendente":"Concluída";salvarAcoes();renderAcoesList()}}
+
+function renderAcoesList(){
+  const el=document.getElementById("acoes-lista");
+  if(!planoAcoes.length){el.innerHTML=`<div class="empty-msg">Nenhuma ação cadastrada ainda. Use o formulário acima para adicionar.</div>`;return}
+  el.innerHTML=planoAcoes.map((a,i)=>`
+    <div class="acao-card" style="opacity:${a.status==="Concluída"?.65:1}">
+      <div class="acao-num">${i+1}</div>
+      <div class="acao-body">
+        <div class="acao-title" style="text-decoration:${a.status==="Concluída"?"line-through":"none"}">${a.desc}</div>
+        <div class="acao-meta">
+          ${a.resp?`👤 ${a.resp} · `:""}
+          ${a.prazo?`📅 ${a.prazo} · `:""}
+          <span class="badge ${a.status==="Concluída"?"badge-green":a.status==="Em andamento"?"badge-blue":"badge-amber"}">${a.status}</span>
+          <span class="badge badge-blue" style="margin-left:4px">${a.semana==="atual"?"Semana atual":"Próxima semana"}</span>
+        </div>
+        ${a.impacto?`<div class="acao-impacto">💡 ${a.impacto}</div>`:""}
+      </div>
+      <div class="acao-actions">
+        <button class="btn btn-outline btn-sm" onclick="toggleStatusAcao(${a.id})" title="Alternar status">✓</button>
+        <button class="btn btn-red btn-sm" onclick="removerAcao(${a.id})" title="Remover">✕</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+/* ================================================================
+   IMPORTAR DADOS — EXCEL
+================================================================ */
+function dragOver(e){e.preventDefault();document.getElementById("upload-area").classList.add("over")}
+function dragLeave(){document.getElementById("upload-area").classList.remove("over")}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processarArquivo(f)}
+function lerArquivo(e){const f=e.target.files[0];if(f)processarArquivo(f)}
+
+function processarArquivo(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:"binary"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      planilhaRaw=XLSX.utils.sheet_to_json(ws,{header:1});
+      colunasDetectadas=planilhaRaw[0]||[];
+      mostrarMapeamento();
+    }catch(err){toast("❌ Erro ao ler o arquivo: "+err.message)}
+  };
+  reader.readAsBinaryString(file);
+}
+
+const CAMPOS=["ano","mes","cia","motivo","setor","status","valor","creditoConciliar","valorRecuperado","statusColeta","saidaInterna","qtdePecasPendentes"];
+const CAMPOS_LABELS={"ano":"Ano","mes":"Mês","cia":"CIA","motivo":"Motivo","setor":"Setor","status":"Status","valor":"Valor (R$)","creditoConciliar":"Crédito a Conciliar","valorRecuperado":"Valor Recuperado","statusColeta":"Status Coleta","saidaInterna":"Saída Interna (true/false)","qtdePecasPendentes":"Qtd Peças Pendentes"};
+
+function mostrarMapeamento(){
+  document.getElementById("mapa-area").style.display="block";
+  const rows=document.getElementById("mapa-rows");
+  rows.innerHTML=CAMPOS.map(campo=>{
+    const best=colunasDetectadas.findIndex(c=>c&&c.toString().toLowerCase().replace(/\s/g,"")===campo.toLowerCase());
+    return`<div class="mapa-row">
+      <label>${CAMPOS_LABELS[campo]}</label>
+      <select id="map-${campo}" class="fg select">
+        <option value="">(ignorar)</option>
+        ${colunasDetectadas.map((c,i)=>`<option value="${i}" ${i===best?"selected":""}>${c}</option>`).join("")}
+      </select>
+    </div>`;
+  }).join("");
+
+  const preview=planilhaRaw.slice(0,6).map(row=>row.join(" | ")).join("\n");
+  document.getElementById("preview-box").textContent=preview;
+}
+
+function confirmarImportacao(){
+  if(!planilhaRaw){toast("❌ Nenhum arquivo carregado");return}
+  const mapa={};
+  CAMPOS.forEach(c=>{const s=document.getElementById("map-"+c);if(s&&s.value!=="")mapa[c]=parseInt(s.value)});
+  const novos=planilhaRaw.slice(1).map(row=>{
+    const obj={};
+    CAMPOS.forEach(c=>{if(mapa[c]!=null)obj[c]=row[mapa[c]]});
+    obj.valor=parseFloat(obj.valor)||0;
+    obj.creditoConciliar=parseFloat(obj.creditoConciliar)||0;
+    obj.valorRecuperado=parseFloat(obj.valorRecuperado)||0;
+    obj.qtdePecasPendentes=parseInt(obj.qtdePecasPendentes)||0;
+    obj.saidaInterna=obj.saidaInterna==="true"||obj.saidaInterna===true||obj.saidaInterna==="Sim";
+    obj.statusColeta=obj.statusColeta||"Concluída";
+    obj.setor=obj.setor||"Financeiro";
+    return obj;
+  }).filter(r=>r.valor>0);
+
+  dadosRelatorio.detalhes=novos;
+  popularSelects();aplicarFiltros();
+  document.getElementById("mapa-area").style.display="none";
+  const msg=document.getElementById("import-status");
+  msg.style.display="block";
+  document.getElementById("import-msg").textContent=`✅ ${novos.length} registros importados com sucesso!`;
+  toast(`✅ ${novos.length} registros importados`);
+  setTimeout(()=>msg.style.display="none",4000);
+}
+
+function cancelarImportacao(){planilhaRaw=null;document.getElementById("mapa-area").style.display="none"}
+function usarDadosExemplo(){toast("✅ Dados de exemplo ativos");document.getElementById("mapa-area").style.display="none";popularSelects();aplicarFiltros()}
+
+/* ================================================================
+   EXPORTAR EXCEL
+================================================================ */
+function exportarExcel(){
+  if(!window.XLSX){toast("❌ SheetJS não carregou");return}
+  const total=dadosFiltrados.reduce((s,d)=>s+d.valor,0);
+  const rows=dadosFiltrados.map(d=>({
+    Ano:d.ano,Mês:d.mes,CIA:d.cia,Motivo:d.motivo,Setor:d.setor||"",Status:d.status,
+    Valor:d.valor,"Crédito Conciliar":d.creditoConciliar||0,"Valor Recuperado":d.valorRecuperado||0,
+    "% do Total":total?+(d.valor/total*100).toFixed(2):0,
+    "Status Coleta":d.statusColeta||"","Saída Interna":d.saidaInterna?"Sim":"Não","Peças Pendentes":d.qtdePecasPendentes||0,
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:8},{wch:12},{wch:12},{wch:24},{wch:12},{wch:14},{wch:16},{wch:18},{wch:18},{wch:14},{wch:16},{wch:14},{wch:16}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Inadimplência");
+  XLSX.writeFile(wb,`inadimplencia-${dadosRelatorio.mesReferencia.replace(/\s*\/\s*/g,"-").toLowerCase()}.xlsx`);
+  toast("✅ Excel exportado");
+}
+
+/* ================================================================
+   BOLETIM — RENDER COMPLETO
+================================================================ */
+function gerarBoletim(){
+  setView("boletim",null);
+  document.querySelectorAll(".nav-tab")[1].classList.add("on");
+  document.querySelectorAll(".nav-tab")[0].classList.remove("on");
+  document.getElementById("btn-pdf").style.display="flex";
+  renderBoletim();
+}
+
+function renderBoletim(){
+  const now=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  document.getElementById("b-data").textContent=now;
+  document.getElementById("b-footer-data").textContent=now;
+  document.getElementById("b-ref").textContent="Referência: "+dadosRelatorio.mesReferencia;
+  document.getElementById("nav-ref").textContent=dadosRelatorio.mesReferencia;
+
+  // Textos
+  const t=dadosRelatorio.textos;
+  document.getElementById("b-txt-geral").innerHTML=t.geral;
+  document.getElementById("b-txt-ano").innerHTML=t.ano;
+  document.getElementById("b-txt-mes").innerHTML=t.mes;
+  document.getElementById("b-txt-causas").innerHTML=t.causas;
+  document.getElementById("b-txt-cias").innerHTML=t.cias;
+  document.getElementById("b-txt-hist").innerHTML=t.hist;
+
+  // KPIs boletim
+  const r=dadosRelatorio.resumo;
+  document.getElementById("b-kpis").innerHTML=[
+    {l:"Inadimplência Total",  v:fmtM(r.totalGeral),       i:"📊",c:"dk"},
+    {l:"Cauda Histórica",      v:fmtM(r.cauda),            i:"📁",c:""},
+    {l:"Nova Inadimplência",   v:fmtM(r.novaInadimplencia),i:"⚠️",c:"am"},
+    {l:"Créditos Conciliar",   v:fmtM(r.creditosConciliar),i:"🔄",c:""},
+    {l:"Valor a Cobrar",       v:fmtM(r.valorCobrar),      i:"💰",c:""},
+    {l:"Recuperado",           v:fmtM(r.recuperado),       i:"✅",c:"gr"},
+    {l:"% Recuperado",         v:r.percRecuperado.toFixed(2)+"%",i:"📈",c:"gr"},
+  ].map(k=>`<div class="b-card ${k.c}"><div class="bcicon">${k.i}</div><div class="bcl">${k.l}</div><div class="bcv">${k.v}</div></div>`).join("");
+
+  // Devoluções
+  const dev=dadosRelatorio.devolucoes;
+  const totDev=dev.itens.reduce((s,i)=>s+i.valor,0);
+  document.getElementById("b-txt-dev").innerHTML=dev.analise;
+  document.getElementById("b-dev-cards").innerHTML=[
+    {l:"Total Pendente",v:fmtM(totDev),                   i:"📋",c:"dk"},
+    {l:"Boleto Oficina",v:fmtM(dev.itens[1]?.valor||0),   i:"🧾",c:"am"},
+    {l:"Em Andamento",  v:fmtM(dev.itens[2]?.valor||0),   i:"🔄",c:""},
+    {l:"Falta Coleta",  v:fmtM(dev.itens[3]?.valor||0),   i:"🚚",c:""},
+    {l:"Demais",        v:fmtM(dev.itens[4]?.valor||0),   i:"⏳",c:"gr"},
+  ].map(k=>`<div class="b-card ${k.c}"><div class="bcicon">${k.i}</div><div class="bcl">${k.l}</div><div class="bcv">${k.v}</div></div>`).join("");
+  document.getElementById("b-dev-tbody").innerHTML=dev.itens.map(r=>`<tr><td><strong>${r.sub}</strong></td><td><span class="badge badge-blue">${r.status}</span></td><td>${fmt(r.valor)}</td></tr>`).join("");
+  document.getElementById("b-dev-tfoot").innerHTML=`<tr><td colspan="2"><strong>Total</strong></td><td><strong>${fmt(totDev)}</strong></td></tr>`;
+
+  // CIAs lista
+  const maxCia=dadosRelatorio.cias[0].valor;
+  const totCias=dadosRelatorio.cias.reduce((s,c)=>s+c.valor,0);
+  document.getElementById("b-cias-lista").innerHTML=dadosRelatorio.cias.map((c,i)=>
+    `<div class="cia-row"><span class="cia-rk">#${i+1}</span><span class="cia-nm">${c.nome}</span><div class="cia-bw"><div class="cia-b"><div class="cia-bf" style="width:${(c.valor/maxCia*100).toFixed(1)}%"></div></div></div><span class="cia-vl">${fmtM(c.valor)}</span></div>`
+  ).join("");
+
+  // Plano de ações no boletim
+  const atuais=planoAcoes.filter(a=>a.semana==="atual");
+  const proximas=planoAcoes.filter(a=>a.semana==="proxima");
+  document.getElementById("b-txt-acoes-header").innerHTML=
+    `Semana de referência: <strong>${dadosRelatorio.mesReferencia}</strong>. Total de ações cadastradas: <strong>${planoAcoes.length}</strong> (${atuais.length} para semana atual, ${proximas.length} para próxima semana).`;
+  document.getElementById("b-acoes-lista").innerHTML=atuais.length?atuais.map((a,i)=>`
+    <div class="b-acao-item">
+      <div class="b-acao-hdr">
+        <div class="b-acao-title">${i+1}. ${a.desc}</div>
+        <span class="badge ${a.status==="Concluída"?"badge-green":a.status==="Em andamento"?"badge-blue":"badge-amber"}">${a.status}</span>
+      </div>
+      ${a.resp||a.prazo?`<div class="b-acao-meta">${a.resp?"👤 "+a.resp:""}${a.resp&&a.prazo?" · ":""}${a.prazo?"📅 "+a.prazo:""}</div>`:""}
+      ${a.impacto?`<div class="b-acao-impacto">💡 Impacto: ${a.impacto}</div>`:""}
+    </div>`).join(""):`<div class="b-analise">Nenhuma ação cadastrada para a semana atual. Acesse a aba <strong>Plano de Ações</strong> na tela gerencial para adicionar.</div>`;
+
+  document.getElementById("b-impactos").innerHTML=proximas.length?`<div class="b-stitle" style="font-size:10px;letter-spacing:2px;margin-bottom:8px">Ações para próxima semana</div>`+proximas.map((a,i)=>`
+    <div class="b-acao-item">
+      <div class="b-acao-hdr"><div class="b-acao-title">${i+1}. ${a.desc}</div><span class="badge badge-blue">Próxima semana</span></div>
+      ${a.impacto?`<div class="b-acao-impacto">💡 ${a.impacto}</div>`:""}
+    </div>`).join(""):``;
+
+  // Próximos passos
+  document.getElementById("b-passos").innerHTML=dadosRelatorio.passos.map((p,i)=>
+    `<div class="b-passo"><div class="b-pn">${String(i+1).padStart(2,"0")}</div><div>${p}</div></div>`
+  ).join("");
+
+  // ── GRÁFICOS BOLETIM ──
+  const pA=dadosRelatorio.porAno;
+  mkChart("b-gAnos",{type:"bar",data:{labels:pA.map(x=>x.ano),datasets:[{label:"Saldo",data:pA.map(x=>x.valor),backgroundColor:pA.map((_,i)=>i>=pA.length-3?"#0A64FF":"rgba(10,100,255,.27)"),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>"R$ "+(v/1e6).toFixed(1)+"M"},grid:{color:"rgba(0,0,0,0.04)"}}}}});
+
+  const pM=dadosRelatorio.meses2026;
+  mkChart("b-gMeses",{type:"bar",data:{labels:pM.map(x=>x.mes),datasets:[{label:"Valor",data:pM.map(x=>x.valor),backgroundColor:pM.map((_,i)=>i>=pM.length-2?"#0A64FF":"rgba(10,100,255,.27)"),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>"R$ "+(v/1e6).toFixed(2)+"M"},grid:{color:"rgba(0,0,0,0.04)"}}}}});
+
+  const pC=dadosRelatorio.causas;const totC=pC.reduce((s,x)=>s+x.valor,0);
+  mkChart("b-gCausas",{type:"doughnut",data:{labels:pC.map(x=>x.nome),datasets:[{data:pC.map(x=>x.valor),backgroundColor:COR,borderWidth:2,borderColor:"#fff"}]},options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{position:"bottom",labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)} (${fmtP(totC?c.raw/totC*100:0)})`}}}}});
+
+  const pN=[...dadosRelatorio.statusNova].sort((a,b)=>b.valor-a.valor);const totN=pN.reduce((s,x)=>s+x.valor,0);
+  mkChart("b-gNova",{type:"bar",data:{labels:pN.map(x=>x.nome),datasets:[{label:"Valor",data:pN.map(x=>x.valor),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} (${fmtP(totN?c.raw/totN*100:0)})`}}},scales:{x:{ticks:{callback:v=>"R$ "+(v/1e6).toFixed(1)+"M"},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  const pD=[...dev.itens].sort((a,b)=>b.valor-a.valor);const totDD=pD.reduce((s,x)=>s+x.valor,0);
+  mkChart("b-gDev",{type:"bar",data:{labels:pD.map(x=>x.sub),datasets:[{label:"Valor",data:pD.map(x=>x.valor),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} (${fmtP(totDD?c.raw/totDD*100:0)})`}}},scales:{x:{ticks:{callback:v=>fmtM(v)},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  const pCI=dadosRelatorio.cias.slice(0,8);const totCI=pCI.reduce((s,x)=>s+x.valor,0);
+  mkChart("b-gCias",{type:"bar",data:{labels:pCI.map(x=>x.nome),datasets:[{label:"Saldo",data:pCI.map(x=>x.valor),backgroundColor:COR,borderRadius:4,borderSkipped:false}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${fmt(c.raw)} (${fmtP(totCI?c.raw/totCI*100:0)})`}}},scales:{x:{ticks:{callback:v=>"R$ "+(v/1e6).toFixed(1)+"M"},grid:{color:"rgba(0,0,0,0.04)"}},y:{grid:{display:false}}}}});
+
+  const pH=dadosRelatorio.historico;
+  mkChart("b-gHist",{type:"bar",data:{labels:pH.map(x=>x.ano),datasets:[{type:"line",label:"% Inadimplência",data:pH.map(x=>x.inadimplencia),borderColor:"#0A64FF",backgroundColor:"rgba(10,100,255,.07)",fill:true,tension:.4,yAxisID:"yP",pointBackgroundColor:"#0A64FF",pointRadius:5},{type:"line",label:"% Pago no Prazo",data:pH.map(x=>x.pagosNoPrazo),borderColor:"#22C55E",backgroundColor:"transparent",borderDash:[5,3],tension:.4,yAxisID:"yP",pointBackgroundColor:"#22C55E",pointRadius:5},{type:"bar",label:"Faturamento",data:pH.map(x=>x.faturamento),backgroundColor:"rgba(115,198,255,.22)",borderRadius:5,yAxisID:"yV",order:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top",labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label==="Faturamento"?"Fat.: "+fmt(c.raw):c.dataset.label+": "+c.raw.toFixed(2)+"%"}}},scales:{yP:{type:"linear",position:"left",ticks:{callback:v=>v+"%"},grid:{color:"rgba(0,0,0,0.04)"},max:100},yV:{type:"linear",position:"right",ticks:{callback:v=>"R$ "+(v/1e6).toFixed(0)+"M"},grid:{display:false}},x:{grid:{display:false}}}}});
+}
+
+/* ================================================================
+   ANÁLISE IA — CAUSA RAIZ
+================================================================ */
+let apiKey="";
+function toggleApiKey(){const el=document.getElementById("api-key-input");el.type=el.type==="password"?"text":"password"}
+
+async function gerarAnaliseIA(){
+  const keyInput=document.getElementById("api-key-input");
+  apiKey=keyInput.value.trim()||apiKey;
+  if(!apiKey){toast("⚠️ Insira sua chave de API do Claude");keyInput.focus();return}
+
+  const el=document.getElementById("ia-result");
+  el.innerHTML=`<div class="ia-loading"><div class="spinner"></div>Analisando dados com IA… aguarde</div>`;
+  document.getElementById("ia-copy-wrap").style.display="none";
+
+  // Prepara resumo dos dados para enviar
+  const det=dadosRelatorio.detalhes;
+  const total=det.reduce((s,d)=>s+d.valor,0);
+  const byCia=Object.entries(det.reduce((a,d)=>{a[d.cia]=(a[d.cia]||0)+d.valor;return a},{})).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const byMot=Object.entries(det.reduce((a,d)=>{a[d.motivo]=(a[d.motivo]||0)+d.valor;return a},{})).sort((a,b)=>b[1]-a[1]);
+  const byAno=Object.entries(det.reduce((a,d)=>{a[d.ano]=(a[d.ano]||0)+d.valor;return a},{})).sort((a,b)=>b[0]-a[0]);
+  const devPend=det.filter(d=>d.motivo==="Devolução"&&d.statusColeta==="Pendente").length;
+  const saidaInt=det.filter(d=>d.saidaInterna).length;
+  const acoes=planoAcoes.map(a=>`- ${a.desc} (${a.status}) — Responsável: ${a.resp||"N/D"} — Impacto: ${a.impacto||"N/D"}`).join("\n");
+
+  const dadosTexto=`
+DADOS DE INADIMPLÊNCIA — ${dadosRelatorio.mesReferencia}
+
+RESUMO GERAL:
+- Total inadimplente: ${fmt(dadosRelatorio.resumo.totalGeral)}
+- Cauda histórica: ${fmt(dadosRelatorio.resumo.cauda)}
+- Nova inadimplência: ${fmt(dadosRelatorio.resumo.novaInadimplencia)}
+- Créditos a conciliar: ${fmt(dadosRelatorio.resumo.creditosConciliar)}
+- Recuperado: ${fmt(dadosRelatorio.resumo.recuperado)} (${dadosRelatorio.resumo.percRecuperado}%)
+
+TOP 5 CIAs OFENSORAS:
+${byCia.map(([cia,v])=>`- ${cia}: ${fmt(v)} (${fmtP(total?v/total*100:0)})`).join("\n")}
+
+POR MOTIVO:
+${byMot.map(([m,v])=>`- ${m}: ${fmt(v)} (${fmtP(total?v/total*100:0)})`).join("\n")}
+
+POR ANO:
+${byAno.map(([a,v])=>`- ${a}: ${fmt(v)}`).join("\n")}
+
+DEVOLUÇÕES:
+- Coletas pendentes: ${devPend}
+- Saídas internas por falha de coleta: ${saidaInt}
+
+AÇÕES EM ANDAMENTO:
+${acoes||"Nenhuma ação cadastrada"}
+
+PLANO DE PRÓXIMOS PASSOS:
+${dadosRelatorio.passos.join("\n")}
+`;
+
+  try{
+    const resp=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1500,
+        system:dadosRelatorio.promptCausaRaiz,
+        messages:[{role:"user",content:dadosTexto}]
+      })
+    });
+    const data=await resp.json();
+    if(data.error){el.innerHTML=`<span style="color:var(--red)">❌ Erro da API: ${data.error.message}</span>`;return}
+    const texto=data.content?.map(b=>b.text||"").join("")||"Sem resposta";
+    el.textContent=texto;
+    document.getElementById("ia-copy-wrap").style.display="block";
+    toast("✅ Análise gerada com sucesso");
+  }catch(err){
+    el.innerHTML=`<span style="color:var(--red)">❌ Erro de conexão: ${err.message}. Verifique sua chave e conexão.</span>`;
+  }
+}
+
+function copiarIA(){
+  const txt=document.getElementById("ia-result").textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast("📋 Análise copiada")).catch(()=>toast("❌ Não foi possível copiar"));
+}
+
+/* ================================================================
+   GERAR PDF
+================================================================ */
+function gerarPDF(){
+  const btn=document.getElementById("btn-pdf");
+  btn.innerHTML="⏳ Gerando...";btn.disabled=true;
+  document.body.classList.add("pdf-mode");
+  setTimeout(()=>{
+    Object.values(CHARTS).forEach(g=>{try{g.resize()}catch(e){}});
+    setTimeout(()=>{
+      const el=document.getElementById("bol-wrap");
+      const mes=dadosRelatorio.mesReferencia.replace(/\s*\/\s*/g,"-").toLowerCase();
+      html2pdf().set({
+        margin:[8,8,8,8],
+        filename:`boletim-inadimplencia-${mes}.pdf`,
+        image:{type:"jpeg",quality:0.96},
+        html2canvas:{scale:2,useCORS:true,logging:false,windowWidth:1040,scrollY:0,scrollX:0},
+        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+        pagebreak:{mode:["css","legacy"],avoid:[".avoid",".b-card",".b-cc",".b-passo",".b-tl-it",".b-acao-item",".ia-box"]},
+      }).from(el).save().then(()=>{
+        document.body.classList.remove("pdf-mode");
+        Object.values(CHARTS).forEach(g=>{try{g.resize()}catch(e){}});
+        btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/></svg> Baixar PDF`;
+        btn.disabled=false;
+      }).catch(()=>{document.body.classList.remove("pdf-mode");btn.innerHTML="Baixar PDF";btn.disabled=false});
+    },700);
+  },300);
+}
+
+/* ================================================================
+   INICIALIZAÇÃO
+================================================================ */
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("btn-pdf").style.display="none";
+  document.getElementById("nav-ref").textContent=dadosRelatorio.mesReferencia;
+  popularSelects();
+  aplicarFiltros();
+  renderAcoesList();
+  // Inicializa boletim em background para PDF imediato
+  renderBoletim();
+});
+</script>
+</body>
+</html>
