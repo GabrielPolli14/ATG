@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -999,7 +1000,7 @@ function renderConfig(){
     <div class="edit-actionbar">
       <div id="edit-counter" class="edit-counter"></div>
       <div style="display:flex;gap:9px">
-        <button class="btn btn-ghost" onclick="restaurarPadrao()">↺ Restaurar padrão</button>
+        <button class="btn btn-ghost" onclick="limparTudo()">🗑 Limpar tudo</button>
         <button class="btn btn-primary" onclick="salvarConfig()">💾 Salvar alterações</button>
       </div>
     </div>
@@ -1033,7 +1034,7 @@ function renderEditFato(){
           <div class="paste-sub">Copie o intervalo no Excel (com a 1ª linha de cabeçalho) e cole abaixo. Tabulações viram colunas e quebras de linha viram registros.</div>
         </div>
       </div>
-      <div class="paste-cols">Colunas reconhecidas — obrigatórias: <b>cia</b>, <b>valor</b>. Opcionais: ano, mes, motivo, setor, status. Aceita também sinônimos (Companhia, Seguradora, Mês, Valor R$…).</div>
+      <div class="paste-cols"><b>Dois formatos aceitos automaticamente:</b><br>• <b>Tabela dinâmica</b> (recomendado): cabeçalho <code>CIA · BAIXADO · EM DIA · VENCIDO · Total Geral</code>, com linhas de ano, mês, CIA e seus motivos. O sistema lê a hierarquia sozinho.<br>• <b>Simples</b>: uma linha por registro, com colunas obrigatórias <b>cia</b> e <b>valor</b> (opcionais: ano, mes, motivo, setor, status). Aceita sinônimos (Companhia, Seguradora, Mês, Valor R$…).</div>
       <textarea id="paste-area" class="paste-area" spellcheck="false" placeholder="ano&#9;mes&#9;cia&#9;motivo&#9;setor&#9;status&#9;valor
 2026&#9;Jan&#9;PORTO SEGURO&#9;Cobrar CIA&#9;Financeiro&#9;Em aberto&#9;114789,00
 2026&#9;Jan&#9;ALLIANZ&#9;Devolução&#9;Logística&#9;Em aberto&#9;667,26"></textarea>
@@ -1128,6 +1129,59 @@ function mapearCabecalho(headers){
   });
   return mapa;
 }
+/* ====== Detecção do layout de TABELA DINÂMICA (pivot) ======
+   Cabeçalho esperado: CIA | BAIXADO | EM DIA | VENCIDO | Total Geral
+   Estrutura hierárquica: linha de ANO → linha de MÊS → linha de CIA → sub-linhas
+   de MOTIVO (BAIXADO, EM DIA, Cobrar CIA, Analisar, Devolução Física, Perda, …). */
+const MES_ABBR={jan:"Jan",fev:"Fev",mar:"Mar",abr:"Abr",mai:"Mai",jun:"Jun",jul:"Jul",ago:"Ago",set:"Set",out:"Out",nov:"Nov",dez:"Dez"};
+const SUBROTULOS=new Set(["baixado","em dia","cobrar cia","cobrar cia - comercial","analisar","analisar bia",
+  "devolucao","devolucao fisica","devolucao virtual","perda","saida interna","tratativas financeiras",
+  "tratativas da ilha","tratativa comercial","boleto oficina","cobranca realizada - comercial"]);
+function ehLayoutPivot(headers){
+  const h=headers.map(x=>normTxt(x));
+  return h[0]==="cia" && h.includes("baixado") && (h.includes("em dia")||h.includes("vencido")) && h.some(x=>x.includes("total"));
+}
+function parsePivotDinamica(linhas,sep){
+  const registros=[]; let ignoradas=0;
+  let emDiaTotal=0;          // soma dos títulos "Em dia" (a vencer) → alimenta só o KPI, não a fato
+  let ano=null,mes=null,cia=null;
+  const ehAno=t=>/^(19|20)\d{2}$/.test((t||"").trim());
+  for(let i=1;i<linhas.length;i++){
+    const cels=linhas[i].split(sep);
+    const c0=(cels[0]||"").trim();
+    if(!c0){ignoradas++;continue;}
+    if(normTxt(c0)==="total geral"){continue;}
+    const b=parseValorBR(cels[1]), ed=parseValorBR(cels[2]), ve=parseValorBR(cels[3]), tot=parseValorBR(cels[4]);
+    if(ehAno(c0)){ano=parseInt(c0,10);mes=null;cia=null;continue;}                 // linha de ANO
+    const mk=normTxt(c0);
+    const restoVazio=cels.slice(1).every(x=>!(x||"").trim());
+    if(MES_ABBR[mk] && restoVazio){mes=MES_ABBR[mk];cia=null;continue;}            // linha de MÊS
+    if(SUBROTULOS.has(mk)){                                                         // sub-linha = MOTIVO
+      let motivo=c0.trim();
+      if(mk==="cobrar cia"||mk==="cobrar cia - comercial") motivo="Cobrar CIA";
+      if(mk==="baixado"){continue;}                                                // recuperado: fora da fato
+      if(mk==="em dia"){
+        // "Em dia" = títulos em aberto mas ainda NÃO vencidos. Não é inadimplência:
+        // não entra na tabela-fato; apenas soma para o KPI "Em Dia" da tela inicial.
+        emDiaTotal+=(ed||tot)||0;
+        continue;
+      }
+      const val=ve||tot; if(!val||!cia){continue;}
+      const status=mk.startsWith("analisar")?"Em análise":"Em aberto";
+      let setor="Financeiro";
+      if(motivo.indexOf("Devolução")>=0||mk==="boleto oficina") setor="Logística";
+      registros.push({ano,mes:mes||"—",cia,motivo,setor,status,valor:round2(val)});
+      continue;
+    }
+    // senão: nova CIA (linha-cabeçalho do grupo). Só troca o contexto.
+    cia=c0.trim();
+    // fallback: CIA com vencido/em-dia direto na própria linha e sem sub-linhas seguintes
+    // (não cria registro aqui para não duplicar com as sub-linhas)
+  }
+  return {registros,ignoradas,emDiaTotal:round2(emDiaTotal)};
+}
+function round2(v){return Math.round((Number(v)||0)*100)/100;}
+
 function analisarColagem(){
   const txt=document.getElementById("paste-area").value;
   const prev=document.getElementById("paste-preview");
@@ -1137,49 +1191,65 @@ function analisarColagem(){
   if(linhas.length<2){prev.innerHTML=msgErro("São necessárias ao menos 2 linhas: cabeçalho + 1 registro.");toast("Dados insuficientes","⚠️");return;}
   const sep=detectarSeparador(linhas[0]);
   const headers=linhas[0].split(sep).map(s=>s.trim());
-  const mapa=mapearCabecalho(headers);
-  const camposEncontrados=Object.values(mapa);
-  // valida obrigatórias
-  const faltando=COL_OBRIGATORIAS.filter(c=>!camposEncontrados.includes(c));
-  if(faltando.length){
-    prev.innerHTML=msgErro(`Coluna(s) obrigatória(s) não encontrada(s): <b>${faltando.join(", ")}</b>.<br>Cabeçalho lido: <code>${headers.join(" | ")}</code>`);
-    toast("Faltam colunas obrigatórias","❌");return;
+
+  let registros=[], descartadas=0, layout="simples", emDiaImportado=null;
+  if(ehLayoutPivot(headers)){
+    // ---- TABELA DINÂMICA ----
+    layout="dinâmica";
+    const r=parsePivotDinamica(linhas,sep);
+    registros=r.registros; descartadas=r.ignoradas; emDiaImportado=r.emDiaTotal;
+    if(!registros.length && !emDiaImportado){prev.innerHTML=msgErro("Layout de tabela dinâmica reconhecido, mas nenhum registro de inadimplência/EM DIA foi extraído. Verifique se colou as linhas de CIA e seus motivos.");toast("Sem registros válidos","❌");return;}
+  }else{
+    // ---- LAYOUT SIMPLES (colunas mapeadas) ----
+    const mapa=mapearCabecalho(headers);
+    const camposEncontrados=Object.values(mapa);
+    const faltando=COL_OBRIGATORIAS.filter(c=>!camposEncontrados.includes(c));
+    if(faltando.length){
+      prev.innerHTML=msgErro(`Coluna(s) obrigatória(s) não encontrada(s): <b>${faltando.join(", ")}</b>.<br>Cabeçalho lido: <code>${headers.join(" | ")}</code><br><span style="font-weight:500">Dica: para tabela dinâmica, o cabeçalho deve ser <code>CIA | BAIXADO | EM DIA | VENCIDO | Total Geral</code>.</span>`);
+      toast("Faltam colunas obrigatórias","❌");return;
+    }
+    for(let i=1;i<linhas.length;i++){
+      const cels=linhas[i].split(sep);
+      const o={ano:"",mes:"—",cia:"",motivo:"",setor:"",status:"Em aberto",valor:0};
+      Object.entries(mapa).forEach(([idx,campo])=>{
+        const raw=(cels[idx]!=null?cels[idx]:"").trim();
+        if(campo==="ano") o.ano=parseInt(raw,10)||"";
+        else if(campo==="valor") o.valor=parseValorBR(raw);
+        else if(campo==="mes") o.mes=parseMes(raw);
+        else o[campo]=raw;
+      });
+      if(!o.cia && !o.valor){descartadas++;continue;}
+      if(!o.ano) o.ano=new Date().getFullYear();
+      registros.push(o);
+    }
+    if(!registros.length){prev.innerHTML=msgErro("Nenhum registro válido encontrado após a conversão.");toast("Sem registros válidos","❌");return;}
   }
-  // converte registros
-  const registros=[]; let descartadas=0;
-  for(let i=1;i<linhas.length;i++){
-    const cels=linhas[i].split(sep);
-    const o={ano:"",mes:"—",cia:"",motivo:"",setor:"",status:"Em aberto",valor:0};
-    Object.entries(mapa).forEach(([idx,campo])=>{
-      const raw=(cels[idx]!=null?cels[idx]:"").trim();
-      if(campo==="ano") o.ano=parseInt(raw,10)||"";
-      else if(campo==="valor") o.valor=parseValorBR(raw);
-      else if(campo==="mes") o.mes=parseMes(raw);
-      else o[campo]=raw;
-    });
-    if(!o.cia && !o.valor){descartadas++;continue;}   // linha vazia/irrelevante
-    if(!o.ano) o.ano=new Date().getFullYear();
-    registros.push(o);
-  }
-  if(!registros.length){prev.innerHTML=msgErro("Nenhum registro válido encontrado após a conversão.");toast("Sem registros válidos","❌");return;}
   // pré-visualização
   const colsShow=["ano","mes","cia","motivo","setor","status","valor"];
   const amostra=registros.slice(0,8);
+  const totVenc=registros.reduce((s,r)=>s+r.valor,0);   // registros = só inadimplência (vencido)
+  const temEmDia=(emDiaImportado!=null && emDiaImportado>0);
   prev.innerHTML=`
-    <div class="paste-ok">✅ <b>${registros.length}</b> registro(s) reconhecido(s)${descartadas?` • ${descartadas} linha(s) ignorada(s)`:""} • separador: <code>${sep==="\t"?"TAB":sep}</code></div>
+    <div class="paste-ok">✅ <b>${registros.length}</b> registro(s) de inadimplência reconhecido(s) • layout: <code>${layout}</code> • separador: <code>${sep==="\t"?"TAB":sep}</code>${descartadas?` • ${descartadas} linha(s) ignorada(s)`:""}<br>Inadimplência (vencido): <b>${fmt(totVenc)}</b>${temEmDia?` • Em dia (KPI, não entra na fato): <b>${fmt(emDiaImportado)}</b>`:""}</div>
     <div class="paste-tblwrap"><table class="tbl paste-tbl"><thead><tr>${colsShow.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>
     ${amostra.map(r=>`<tr>${colsShow.map(c=>`<td${c==="valor"?' class="num"':""}>${c==="valor"?fmt(r[c]):(r[c]||"—")}</td>`).join("")}</tr>`).join("")}
     </tbody></table></div>
     ${registros.length>amostra.length?`<div class="paste-more">…e mais ${registros.length-amostra.length} registro(s). Pré-visualização limitada a ${amostra.length}.</div>`:""}`;
   // aplica
   const modo=(document.querySelector('input[name="paste-mode"]:checked')||{}).value||"substituir";
-  if(modo==="acrescentar") DR.fato=DR.fato.concat(registros);
-  else DR.fato=registros;
+  if(modo==="acrescentar"){
+    DR.fato=DR.fato.concat(registros);
+    if(temEmDia) DR.emDiaTotal=round2((DR.emDiaTotal||0)+emDiaImportado);
+  }else{
+    DR.fato=registros;
+    if(temEmDia) DR.emDiaTotal=emDiaImportado;   // KPI "Em Dia" passa a refletir a base colada
+  }
   normalizarFato();
   salvar();              // persiste no localStorage
   popularFiltros();      // recalcula opções de filtro
   renderChips();
-  toast(`${registros.length} registro(s) ${modo==="acrescentar"?"acrescentado(s)":"importado(s)"} com sucesso`,"✅");
+  const msgEmDia=temEmDia?` • KPI Em Dia: ${fmt(DR.emDiaTotal)}`:"";
+  toast(`${registros.length} registro(s) ${modo==="acrescentar"?"acrescentado(s)":"importado(s)"}${msgEmDia}`,"✅");
   // mantém o usuário na aba e mostra contagem atualizada
   renderEditFato();
   switchEditTab("fato");
@@ -1219,7 +1289,17 @@ function renderEditGeral(){
     </div>`;
 }
 function salvarConfig(){salvar();popularFiltros();toast("Dados salvos","💾");}
-function restaurarPadrao(){if(confirm("Restaurar todos os dados para o padrão? Isso apaga suas edições.")){DR=clone(DADOS_PADRAO);salvar();popularFiltros();renderConfig();toast("Dados restaurados","↺");}}
+function limparTudo(){
+  if(confirm("Limpar TODA a base de dados? Isso apaga todos os registros da tabela-fato e zera o KPI Em Dia, deixando o sistema pronto para você subir uma nova análise. Esta ação não pode ser desfeita.")){
+    DR.fato=[];
+    DR.emDiaTotal=0;
+    salvar();
+    popularFiltros();
+    renderChips&&renderChips();
+    renderConfig();
+    toast("Base limpa — pronto para subir nova análise","🗑");
+  }
+}
 
 /* NAVEGAÇÃO — menu lateral agrupado */
 const SECOES=[
