@@ -360,7 +360,7 @@ const LOGO_AUTOGLASS = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQMAAAB2CA
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
 const DADOS_PADRAO = {
-  refMes:"Maio / 2026",
+  refMes:"Junho / 2026",
   fato:[
     {ano:2026,mes:"Jan",cia:"ALFA",motivo:"Cobrar CIA",setor:"Financeiro",status:"Em aberto",valor:5561.53},
     {ano:2026,mes:"Jan",cia:"ALLIANZ",motivo:"Analisar",setor:"Financeiro",status:"Em análise",valor:358.51},
@@ -484,58 +484,62 @@ const DADOS_PADRAO = {
     {status:"Divergência",valor:318623.51,qtd:41},
   ],
   coletas:{
+    mesRef:"Junho",
     semanas:[
-      {sem:"Semana 01",abertas:342,efetuadas:93, efic:27,naoConcl:249,calda:249,realizCalda:118,totalCalda:131},
-      {sem:"Semana 02",abertas:574,efetuadas:207,efic:36,naoConcl:367,calda:367,realizCalda:152,totalCalda:215},
-      {sem:"Semana 03",abertas:514,efetuadas:155,efic:30,naoConcl:359,calda:359,realizCalda:118,totalCalda:241},
-      {sem:"Semana 04",abertas:598,efetuadas:189,efic:32,naoConcl:409,calda:409,realizCalda:30, totalCalda:379},
+      {sem:"Semana 01",abertas:239,efetuadas:83,efic:35,naoConcl:156,calda:156,realizCalda:0,totalCalda:156},
+      {sem:"Semana 02",abertas:0,  efetuadas:0, efic:0, naoConcl:0,  calda:0,  realizCalda:0,totalCalda:0},
+      {sem:"Semana 03",abertas:0,  efetuadas:0, efic:0, naoConcl:0,  calda:0,  realizCalda:0,totalCalda:0},
+      {sem:"Semana 04",abertas:0,  efetuadas:0, efic:0, naoConcl:0,  calda:0,  realizCalda:0,totalCalda:0},
     ],
     resumo:{
-      totalDevAbertas:2028, totalColetadas:1062, eficMes:52, pendentesCaldaMes:966,
-      caldaAnteriores:2002, totalColetadoCalda:1447, eficCalda:72,
-      novaCaldaMes:966, caldaRealFinal:1521,
+      totalDevAbertas:239, totalColetadas:83, eficMes:35, pendentesCaldaMes:156,
+      caldaAnteriores:1078, totalColetadoCalda:195, eficCalda:18,
+      novaCaldaMes:156, caldaRealFinal:1039,
     },
     expedicaoMes:[
-      {tipo:"Próprio",qtd:221,perc:65},
-      {tipo:"Terceiro",qtd:118,perc:35},
-      {tipo:"Retirada",qtd:3,perc:1},
+      {tipo:"Próprio",qtd:126,perc:53},
+      {tipo:"Terceiro",qtd:113,perc:47},
+      {tipo:"Retirada",qtd:0,perc:0},
     ],
     expedicaoCalda:[
-      {tipo:"Terceiro",qtd:307,perc:55},
-      {tipo:"Próprio",qtd:247,perc:45},
-      {tipo:"Retirada",qtd:1,perc:0},
+      {tipo:"Próprio",qtd:487,perc:55},
+      {tipo:"Terceiro",qtd:393,perc:45},
+      {tipo:"Retirada",qtd:3,perc:0},
     ],
     caldaPorMes:[
-      {mes:"Jan",qtd:4,perc:0},
-      {mes:"Fev",qtd:14,perc:1},
-      {mes:"Mar",qtd:66,perc:4},
-      {mes:"Abr",qtd:471,perc:31},
-      {mes:"Mai",qtd:966,perc:64},
+      {mes:"Jan",qtd:1,perc:0},
+      {mes:"Fev",qtd:1,perc:0},
+      {mes:"Mar",qtd:7,perc:1},
+      {mes:"Abr",qtd:92,perc:14},
+      {mes:"Mai",qtd:555,perc:85},
     ],
   },
   creditoCia:[
     {cia:"Porto Seguro",valor:932445.97},
     {cia:"Tokio",valor:195203.92},
     {cia:"Allianz",valor:125530.11},
-    {cia:"Mapfre",valor:102519.20},
     {cia:"Azul",valor:50415.76},
+    {cia:"Mapfre",valor:50271.95},
     {cia:"Alfa",valor:36574.66},
+    {cia:"YLM",valor:35288.57},
     {cia:"HDI",valor:34662.15},
     {cia:"Suhai",valor:31544.50},
-    {cia:"Sura",valor:27552.60},
-    {cia:"Zurich",valor:16259.20},
+    {cia:"Sura",valor:27924.00},
+    {cia:"Zurich",valor:19564.89},
     {cia:"Bradesco",valor:10442.87},
     {cia:"Ezze",valor:10049.90},
+    {cia:"Caixa",valor:4336.75},
     {cia:"Pier",valor:2530.32},
-    {cia:"Unidas",valor:2230.60},
     {cia:"Gente",valor:1065.30},
     {cia:"Sancor",valor:814.63},
     {cia:"Banestes",valor:693.20},
     {cia:"Sompo",valor:610.00},
+    {cia:"Sulamerica",valor:320.00},
     {cia:"Mitsui",valor:153.83},
+    {cia:"Brasil Veículos",valor:-31822.54},
     {cia:"Liberty",valor:-33893.53},
   ],
-  creditoTotal:1547405.19,
+  creditoTotal:1504727.21,
   emDiaTotal:14278378.58,
   acoes:[
     {desc:"Acionar Porto Seguro — maior exposição em Cobrar CIA",resp:"Financeiro",prazo:"2026-06-10",status:"Em andamento"},
@@ -546,7 +550,7 @@ const DADOS_PADRAO = {
 };
 
 /* PERSISTÊNCIA */
-const LS_KEY="sis_inadimplencia_v3";
+const LS_KEY="sis_inadimplencia_v4";
 let DR = carregar();
 function carregar(){try{const r=localStorage.getItem(LS_KEY);if(r)return JSON.parse(r);}catch(e){}return clone(DADOS_PADRAO);}
 function salvar(){try{localStorage.setItem(LS_KEY,JSON.stringify(DR));}catch(e){}}
@@ -719,16 +723,20 @@ function renderDevolucoes(){
   const col=DR.coletas;
   const r=col.resumo;
   const sem=col.semanas;
+  const mesRef=col.mesRef||(DR.refMes?DR.refMes.split("/")[0].trim():"Mês atual");
+  const totAb=sem.reduce((a,s)=>a+s.abertas,0);
+  const totEf=sem.reduce((a,s)=>a+s.efetuadas,0);
+  const eficTotal=totAb?Math.round(totEf/totAb*100):0;
 
   let html=`<div class="kpi-row">
-    ${kpi("Devoluções abertas (mês)",fmtN(r.totalDevAbertas),"Maio/2026","dk")}
+    ${kpi("Devoluções abertas (mês)",fmtN(r.totalDevAbertas),mesRef+"/2026","dk")}
     ${kpi("Coletadas no mês",fmtN(r.totalColetadas),"de "+fmtN(r.totalDevAbertas),"gr")}
     ${kpi("Eficiência do mês",r.eficMes+"%","meta 50%",r.eficMes>=50?"gr":"am")}
     ${kpi("Pendentes (calda mês)",fmtN(r.pendentesCaldaMes),"nova calda","rd")}
     ${kpi("Eficiência da calda",r.eficCalda+"%",fmtN(r.totalColetadoCalda)+" / "+fmtN(r.caldaAnteriores),"gr")}
   </div>
 
-  ${panelOpen("Controle de coletas — semanas de Maio","abertas, efetuadas, eficiência e calda")}
+  ${panelOpen("Controle de coletas — semanas de "+mesRef,"abertas, efetuadas, eficiência e calda")}
     <table class="tbl"><thead><tr>
       <th>Semana</th><th class="num">Abertas</th><th class="num">Efetuadas</th><th class="num">% Efic.</th>
       <th class="num">Não concl.</th><th class="num">Calda</th><th class="num">Realiz. calda</th><th class="num">Total calda</th>
@@ -740,9 +748,9 @@ function renderDevolucoes(){
     </tr>`).join("")}
     <tr style="background:var(--gelo);font-weight:700">
       <td><strong>Total</strong></td>
-      <td class="num">${fmtN(sem.reduce((a,s)=>a+s.abertas,0))}</td>
-      <td class="num">${fmtN(sem.reduce((a,s)=>a+s.efetuadas,0))}</td>
-      <td class="num">32%</td>
+      <td class="num">${fmtN(totAb)}</td>
+      <td class="num">${fmtN(totEf)}</td>
+      <td class="num">${eficTotal}%</td>
       <td class="num">${fmtN(sem.reduce((a,s)=>a+s.naoConcl,0))}</td>
       <td class="num">${fmtN(sem.reduce((a,s)=>a+s.calda,0))}</td>
       <td class="num">${fmtN(sem.reduce((a,s)=>a+s.realizCalda,0))}</td>
@@ -757,7 +765,7 @@ function renderDevolucoes(){
   </div>
 
   <div class="grid g2">
-    ${panelOpen("Coletas por expedição — mês atual","Maio • "+fmtN(col.expedicaoMes.reduce((a,e)=>a+e.qtd,0))+" coletas","chart-box sm")}<canvas id="c-exped-mes"></canvas>${panelClose()}
+    ${panelOpen("Coletas por expedição — mês atual",mesRef+" • "+fmtN(col.expedicaoMes.reduce((a,e)=>a+e.qtd,0))+" coletas","chart-box sm")}<canvas id="c-exped-mes"></canvas>${panelClose()}
     ${panelOpen("Coletas por expedição — calda anterior",fmtN(col.expedicaoCalda.reduce((a,e)=>a+e.qtd,0))+" coletas","chart-box sm")}<canvas id="c-exped-calda"></canvas>${panelClose()}
   </div>
 
@@ -993,6 +1001,8 @@ function renderConfig(){
     <div class="section-sub">Edite a tabela-fato e o plano de ações. As alterações são salvas localmente no navegador.</div>
     <div class="edit-tabs">
       <button class="edit-tab active" data-tab="fato" onclick="switchEditTab('fato')">📊 Tabela-fato</button>
+      <button class="edit-tab" data-tab="devol" onclick="switchEditTab('devol')">🚚 Devoluções & Logística</button>
+      <button class="edit-tab" data-tab="cred" onclick="switchEditTab('cred')">💳 Crédito & Conciliação</button>
       <button class="edit-tab" data-tab="acoes" onclick="switchEditTab('acoes')">✅ Plano de Ações</button>
       <button class="edit-tab" data-tab="geral" onclick="switchEditTab('geral')">⚙️ Geral</button>
     </div>
@@ -1004,19 +1014,24 @@ function renderConfig(){
       </div>
     </div>
     <div id="etab-fato" class="etab"></div>
+    <div id="etab-devol" class="etab" style="display:none"></div>
+    <div id="etab-cred" class="etab" style="display:none"></div>
     <div id="etab-acoes" class="etab" style="display:none"></div>
     <div id="etab-geral" class="etab" style="display:none"></div>
   </div>`;
   document.getElementById("content").innerHTML=html;
-  renderEditFato(); renderEditAcoes(); renderEditGeral();
+  renderEditFato(); renderEditDevol(); renderEditCred(); renderEditAcoes(); renderEditGeral();
   switchEditTab(EDIT_TAB);
 }
 let EDIT_TAB="fato";
 function switchEditTab(t){
   EDIT_TAB=t;
   document.querySelectorAll(".edit-tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
-  ["fato","acoes","geral"].forEach(x=>{const el=document.getElementById("etab-"+x);if(el)el.style.display=(x===t)?"block":"none";});
-  const cont={fato:DR.fato.length+" linhas na tabela-fato",acoes:DR.acoes.length+" ações cadastradas",geral:"Parâmetros gerais do sistema"};
+  ["fato","devol","cred","acoes","geral"].forEach(x=>{const el=document.getElementById("etab-"+x);if(el)el.style.display=(x===t)?"block":"none";});
+  const cont={fato:DR.fato.length+" linhas na tabela-fato",
+    devol:"Coletas, expedição e calda — "+(DR.coletas.mesRef||"mês atual"),
+    cred:DR.creditoCia.length+" CIAs de seguro • conciliação",
+    acoes:DR.acoes.length+" ações cadastradas",geral:"Parâmetros gerais do sistema"};
   const c=document.getElementById("edit-counter"); if(c) c.textContent=cont[t]||"";
 }
 function renderEditFato(){
@@ -1260,6 +1275,290 @@ function msgErro(html){return `<div class="paste-err">❌ ${html}</div>`;}
 function editFato(i,campo,val){DR.fato[i][campo]=(campo==="ano")?parseInt(val)||0:(campo==="valor")?parseFloat(String(val).replace(/\./g,"").replace(",","."))||0:val;}
 function addLinhaFato(){DR.fato.unshift({ano:new Date().getFullYear(),mes:"Jan",cia:"",motivo:"",setor:"",status:"Em aberto",valor:0});renderEditFato();switchEditTab("fato");}
 function delLinhaFato(i){DR.fato.splice(i,1);renderEditFato();switchEditTab("fato");}
+
+/* ============================================================
+   EDIÇÃO — DEVOLUÇÕES & LOGÍSTICA
+   Mesma lógica da inadimplência: colar do Excel + edição manual.
+   Tabelas editáveis: semanas de coleta, resumo, expedição (mês/calda),
+   composição da calda por mês e devoluções por status.
+============================================================ */
+function renderEditDevol(){
+  const col=DR.coletas, r=col.resumo, sem=col.semanas;
+  const numF=(lbl,obj,campo,onch,step)=>`<div class="ec-field"><label>${lbl}</label><input type="number"${step?' step="'+step+'"':''} value="${obj[campo]}" onchange="${onch}"></div>`;
+  document.getElementById("etab-devol").innerHTML=`
+    <div class="paste-panel">
+      <div class="paste-head"><div>
+        <div class="paste-title">📋 Colar controle de coletas do Excel</div>
+        <div class="paste-sub">Copie as 4 linhas de semana do bloco "CONTROLE DE COLETAS" (Semana 01..04) com as colunas na ordem: <b>Semana · Abertas · Efetuadas · %Efic · Não concl · Calda · Realiz.calda · Total calda</b>. Cole abaixo — o sistema lê e atualiza a tabela e os resumos automaticamente.</div>
+      </div></div>
+      <div class="paste-cols"><b>Dica:</b> a coluna %Efic pode vir como <code>27%</code>, <code>#DIV/0!</code> ou vazia — o sistema recalcula sozinho a partir de Efetuadas ÷ Abertas. O mês de referência usado nos títulos é definido na aba <b>Geral</b>.</div>
+      <textarea id="paste-col" class="paste-area" spellcheck="false" placeholder="Semana 01&#9;239&#9;83&#9;35%&#9;156&#9;156&#9;0&#9;156
+Semana 02&#9;0&#9;0&#9;#DIV/0!&#9;0&#9;0&#9;0&#9;0"></textarea>
+      <div class="paste-actions">
+        <button class="btn btn-primary" onclick="analisarColetas()">⚡ Analisar e Subir Coletas</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('paste-col').value='';document.getElementById('paste-col-prev').innerHTML='';">Limpar</button>
+      </div>
+      <div id="paste-col-prev" class="paste-preview"></div>
+    </div>
+
+    <div class="edit-divider"><span>ou edite linha a linha</span></div>
+
+    <div class="edit-card">
+      <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Semanas de coleta</label></div>
+      ${sem.map((s,i)=>`<div class="ec-grid" style="margin-bottom:9px">
+        <div class="ec-field ec-wide"><label>Semana</label><input value="${s.sem}" onchange="editColSem(${i},'sem',this.value)"></div>
+        ${numF("Abertas",s,"abertas",`editColSem(${i},'abertas',this.value)`)}
+        ${numF("Efetuadas",s,"efetuadas",`editColSem(${i},'efetuadas',this.value)`)}
+        ${numF("Não concl.",s,"naoConcl",`editColSem(${i},'naoConcl',this.value)`)}
+        ${numF("Calda",s,"calda",`editColSem(${i},'calda',this.value)`)}
+        ${numF("Realiz. calda",s,"realizCalda",`editColSem(${i},'realizCalda',this.value)`)}
+        ${numF("Total calda",s,"totalCalda",`editColSem(${i},'totalCalda',this.value)`)}
+      </div>`).join("")}
+      <div class="paste-cols" style="margin:4px 0 0">A <b>% de eficiência</b> de cada semana é recalculada automaticamente (Efetuadas ÷ Abertas) ao salvar.</div>
+    </div>
+
+    <div class="edit-card" style="margin-top:12px">
+      <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Resumo do mês & calda</label></div>
+      <div class="ec-grid">
+        ${numF("Devoluções abertas (mês)",r,"totalDevAbertas",`editColRes('totalDevAbertas',this.value)`)}
+        ${numF("Coletadas no mês",r,"totalColetadas",`editColRes('totalColetadas',this.value)`)}
+        ${numF("Eficiência mês (%)",r,"eficMes",`editColRes('eficMes',this.value)`)}
+        ${numF("Pendentes (calda mês)",r,"pendentesCaldaMes",`editColRes('pendentesCaldaMes',this.value)`)}
+      </div>
+      <div class="ec-grid" style="margin-top:9px">
+        ${numF("Calda meses anteriores",r,"caldaAnteriores",`editColRes('caldaAnteriores',this.value)`)}
+        ${numF("Coletado da calda",r,"totalColetadoCalda",`editColRes('totalColetadoCalda',this.value)`)}
+        ${numF("Eficiência calda (%)",r,"eficCalda",`editColRes('eficCalda',this.value)`)}
+        ${numF("Nova calda do mês",r,"novaCaldaMes",`editColRes('novaCaldaMes',this.value)`)}
+        ${numF("Calda real final",r,"caldaRealFinal",`editColRes('caldaRealFinal',this.value)`)}
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:12px">
+      <div class="edit-card">
+        <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Expedição — mês atual</label></div>
+        ${col.expedicaoMes.map((e,i)=>`<div class="ec-grid" style="margin-bottom:8px">
+          <div class="ec-field ec-wide"><label>Tipo</label><input value="${e.tipo}" onchange="editExp('expedicaoMes',${i},'tipo',this.value)"></div>
+          ${numF("Qtd",e,"qtd",`editExp('expedicaoMes',${i},'qtd',this.value)`)}
+          ${numF("%",e,"perc",`editExp('expedicaoMes',${i},'perc',this.value)`)}
+        </div>`).join("")}
+      </div>
+      <div class="edit-card">
+        <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Expedição — calda anterior</label></div>
+        ${col.expedicaoCalda.map((e,i)=>`<div class="ec-grid" style="margin-bottom:8px">
+          <div class="ec-field ec-wide"><label>Tipo</label><input value="${e.tipo}" onchange="editExp('expedicaoCalda',${i},'tipo',this.value)"></div>
+          ${numF("Qtd",e,"qtd",`editExp('expedicaoCalda',${i},'qtd',this.value)`)}
+          ${numF("%",e,"perc",`editExp('expedicaoCalda',${i},'perc',this.value)`)}
+        </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="edit-card" style="margin-top:12px">
+      <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Composição da calda por mês de origem</label></div>
+      ${col.caldaPorMes.map((c,i)=>`<div class="ec-grid" style="margin-bottom:8px">
+        <div class="ec-field ec-wide"><label>Mês</label><input value="${c.mes}" onchange="editCaldaMes(${i},'mes',this.value)"></div>
+        ${numF("Qtd",c,"qtd",`editCaldaMes(${i},'qtd',this.value)`)}
+        ${numF("%",c,"perc",`editCaldaMes(${i},'perc',this.value)`)}
+        <button class="ec-del" onclick="delCaldaMes(${i})" title="Remover">🗑</button>
+      </div>`).join("")}
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="addCaldaMes()">+ Mês</button>
+    </div>
+
+    <div class="edit-card" style="margin-top:12px">
+      <div class="ec-field" style="margin-bottom:11px"><label style="font-size:11px;color:var(--azul)">Devoluções por status (valor)</label></div>
+      ${DR.devolucoes.map((d,i)=>`<div class="ec-grid" style="margin-bottom:8px">
+        <div class="ec-field ec-wide"><label>Status</label><input value="${(d.status||'').replace(/"/g,'&quot;')}" onchange="editDevSt(${i},'status',this.value)"></div>
+        <div class="ec-field"><label>Valor (R$)</label><input type="number" step="0.01" value="${d.valor}" onchange="editDevSt(${i},'valor',this.value)"></div>
+        ${numF("Qtd",d,"qtd",`editDevSt(${i},'qtd',this.value)`)}
+        <button class="ec-del" onclick="delDevSt(${i})" title="Remover">🗑</button>
+      </div>`).join("")}
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="addDevSt()">+ Status</button>
+    </div>`;
+}
+function recalcEficSemanas(){
+  DR.coletas.semanas.forEach(s=>{s.efic=s.abertas?Math.round(s.efetuadas/s.abertas*100):0;});
+}
+function editColSem(i,campo,val){
+  const s=DR.coletas.semanas[i];
+  s[campo]=(campo==="sem")?val:(parseInt(String(val).replace(/\D/g,""),10)||0);
+  recalcEficSemanas();
+}
+function editColRes(campo,val){DR.coletas.resumo[campo]=parseInt(String(val).replace(/[^\d-]/g,""),10)||0;}
+function editExp(grupo,i,campo,val){DR.coletas[grupo][i][campo]=(campo==="tipo")?val:(parseInt(String(val).replace(/\D/g,""),10)||0);}
+function editCaldaMes(i,campo,val){DR.coletas.caldaPorMes[i][campo]=(campo==="mes")?val:(parseInt(String(val).replace(/\D/g,""),10)||0);}
+function addCaldaMes(){DR.coletas.caldaPorMes.push({mes:"",qtd:0,perc:0});renderEditDevol();switchEditTab("devol");}
+function delCaldaMes(i){DR.coletas.caldaPorMes.splice(i,1);renderEditDevol();switchEditTab("devol");}
+function editDevSt(i,campo,val){DR.devolucoes[i][campo]=(campo==="status")?val:(campo==="valor"?(parseFloat(String(val).replace(/\./g,"").replace(",","."))||0):(parseInt(String(val).replace(/\D/g,""),10)||0));}
+function addDevSt(){DR.devolucoes.push({status:"",valor:0,qtd:0});renderEditDevol();switchEditTab("devol");}
+function delDevSt(i){DR.devolucoes.splice(i,1);renderEditDevol();switchEditTab("devol");}
+function analisarColetas(){
+  const txt=document.getElementById("paste-col").value;
+  const prev=document.getElementById("paste-col-prev");
+  if(!txt||!txt.trim()){prev.innerHTML=msgErro("Cole as linhas de semana antes de analisar.");toast("Nada para analisar","⚠️");return;}
+  let linhas=txt.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
+  const sep=detectarSeparador(linhas[0]);
+  // ignora cabeçalho se a 1ª célula não parecer "Semana"/"Total"
+  const novas=[];
+  linhas.forEach(l=>{
+    const c=l.split(sep).map(x=>x.trim());
+    if(c.length<3)return;
+    const rotulo=c[0];
+    if(/total/i.test(rotulo))return;                  // pula linha de total
+    if(!/semana/i.test(rotulo) && novas.length===0 && isNaN(parseInt(c[1],10)))return; // pula cabeçalho
+    const ni=(v)=>parseInt(String(v||"").replace(/\D/g,""),10)||0;
+    novas.push({
+      sem:/semana/i.test(rotulo)?rotulo:("Semana "+String(novas.length+1).padStart(2,"0")),
+      abertas:ni(c[1]), efetuadas:ni(c[2]), efic:0,
+      naoConcl:ni(c[4]!=null?c[4]:c[3]), calda:ni(c[5]),
+      realizCalda:ni(c[6]), totalCalda:ni(c[7])
+    });
+  });
+  if(!novas.length){prev.innerHTML=msgErro("Nenhuma linha de semana reconhecida. Verifique a ordem das colunas.");toast("Sem registros","❌");return;}
+  DR.coletas.semanas=novas;
+  recalcEficSemanas();
+  const totAb=novas.reduce((a,s)=>a+s.abertas,0), totEf=novas.reduce((a,s)=>a+s.efetuadas,0);
+  prev.innerHTML=`<div class="paste-ok">✅ <b>${novas.length}</b> semana(s) atualizada(s) • Abertas: <b>${fmtN(totAb)}</b> • Efetuadas: <b>${fmtN(totEf)}</b> • Eficiência total: <b>${totAb?Math.round(totEf/totAb*100):0}%</b></div>
+    <div class="paste-tblwrap"><table class="tbl paste-tbl"><thead><tr><th>Semana</th><th class="num">Abertas</th><th class="num">Efetuadas</th><th class="num">%Efic</th><th class="num">Não concl</th><th class="num">Calda</th><th class="num">Realiz.calda</th><th class="num">Total calda</th></tr></thead><tbody>
+    ${novas.map(s=>`<tr><td>${s.sem}</td><td class="num">${s.abertas}</td><td class="num">${s.efetuadas}</td><td class="num">${s.efic}%</td><td class="num">${s.naoConcl}</td><td class="num">${s.calda}</td><td class="num">${s.realizCalda}</td><td class="num">${s.totalCalda}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="paste-more">Confira os resumos do mês/calda logo abaixo e ajuste se necessário, depois clique em "Salvar alterações".</div>`;
+  salvar();
+  toast(novas.length+" semana(s) importada(s)","✅");
+  renderEditDevol(); switchEditTab("devol");
+  document.getElementById("paste-col").value=txt;
+  document.getElementById("paste-col-prev").innerHTML=prev.innerHTML;
+}
+
+/* ============================================================
+   EDIÇÃO — CRÉDITO & CONCILIAÇÃO
+   Colar do Excel (KPI de crédito por CIA) + edição manual.
+   O parser entende o layout enviado: Cliente · Responsável · CRÉDITO ·
+   ESTORNO · Total geral, calculando o crédito líquido por CIA.
+============================================================ */
+function renderEditCred(){
+  document.getElementById("etab-cred").innerHTML=`
+    <div class="paste-panel">
+      <div class="paste-head"><div>
+        <div class="paste-title">📋 Colar crédito por CIA do Excel</div>
+        <div class="paste-sub">Cole a tabela com as colunas <b>Cliente · Responsável · CRÉDITO · ESTORNO · Total geral</b> (com cabeçalho). O sistema usa o <b>Total geral</b> (Crédito − Estorno) como crédito líquido por CIA, ignora a linha "Total geral" e mantém apenas as <b>CIAs de seguro</b>.</div>
+      </div></div>
+      <div class="paste-cols"><b>CIAs de seguro:</b> o sistema reconhece automaticamente seguradoras (nomes com "SEGUR", "SEGURADORA", ou da lista conhecida: Porto, Allianz, Mapfre, Tokio, Azul, HDI, Liberty, Zurich, Bradesco, Caixa, Sura, Suhai, etc.). Locadoras, transportadoras, associações e tecnologia são descartadas. Você pode revisar e ajustar manualmente abaixo.</div>
+      <textarea id="paste-cred" class="paste-area" spellcheck="false" placeholder="Cliente&#9;Responsável&#9;CRÉDITO&#9;ESTORNO&#9;Total geral
+PORTO SEGURO&#9;Gleiciara Bautz&#9;R$ 6.366.852,51&#9;R$ -5.434.406,54&#9;R$ 932.445,97
+ALLIANZ&#9;Joyce Colombeki&#9;R$ 1.328.909,57&#9;R$ -1.203.379,46&#9;R$ 125.530,11"></textarea>
+      <div class="paste-actions">
+        <button class="btn btn-primary" onclick="analisarCredito()">⚡ Analisar e Subir Crédito</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('paste-cred').value='';document.getElementById('paste-cred-prev').innerHTML='';">Limpar</button>
+        <span class="paste-mode">
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--cinza);font-weight:600;cursor:pointer"><input type="checkbox" id="cred-so-seguro" checked> Manter apenas CIAs de seguro</label>
+        </span>
+      </div>
+      <div id="paste-cred-prev" class="paste-preview"></div>
+    </div>
+
+    <div class="edit-divider"><span>ou edite linha a linha</span></div>
+
+    <div class="edit-card" style="margin-bottom:12px;max-width:420px">
+      <div class="ec-field"><label>Crédito líquido total (R$)</label><input type="number" step="0.01" value="${DR.creditoTotal||0}" onchange="DR.creditoTotal=parseFloat(this.value)||0"></div>
+      <div class="paste-cols" style="margin:8px 0 0">Recalcular automaticamente a partir das CIAs abaixo: <button class="btn btn-ghost" style="padding:5px 11px;margin-top:5px" onclick="recalcCreditoTotal()">Σ Somar CIAs</button></div>
+    </div>
+
+    <div class="ec-field" style="margin-bottom:9px"><label style="font-size:11px;color:var(--azul)">Crédito líquido por CIA de seguro</label></div>
+    <button class="btn btn-primary" style="margin-bottom:13px" onclick="addCredCia()">+ Nova CIA</button>
+    <div class="edit-cards">
+    ${DR.creditoCia.map((c,i)=>`<div class="edit-card"><div class="ec-grid">
+      <div class="ec-field ec-wide"><label>CIA</label><input value="${(c.cia||'').replace(/"/g,'&quot;')}" onchange="editCredCia(${i},'cia',this.value)"></div>
+      <div class="ec-field"><label>Crédito líquido (R$)</label><input type="number" step="0.01" value="${c.valor}" onchange="editCredCia(${i},'valor',this.value)"></div>
+      <button class="ec-del" onclick="delCredCia(${i})" title="Remover">🗑</button>
+    </div></div>`).join("")}
+    </div>
+
+    <div class="ec-field" style="margin:18px 0 9px"><label style="font-size:11px;color:var(--azul)">Conciliação por CIA — faturamento e prazo</label></div>
+    <button class="btn btn-primary" style="margin-bottom:13px" onclick="addConc()">+ Nova CIA</button>
+    <div class="edit-cards">
+    ${DR.conciliacao.map((c,i)=>`<div class="edit-card"><div class="ec-grid">
+      <div class="ec-field ec-wide"><label>CIA</label><input value="${(c.cia||'').replace(/"/g,'&quot;')}" onchange="editConc(${i},'cia',this.value)"></div>
+      <div class="ec-field"><label>Faturamento (R$)</label><input type="number" step="0.01" value="${c.faturamento}" onchange="editConc(${i},'faturamento',this.value)"></div>
+      <div class="ec-field"><label>Dias médios</label><input type="number" value="${c.dias}" onchange="editConc(${i},'dias',this.value)"></div>
+      <button class="ec-del" onclick="delConc(${i})" title="Remover">🗑</button>
+    </div></div>`).join("")}
+    </div>`;
+}
+function editCredCia(i,campo,val){DR.creditoCia[i][campo]=(campo==="cia")?val:(parseFloat(String(val).replace(/\./g,"").replace(",","."))||0);}
+function addCredCia(){DR.creditoCia.unshift({cia:"",valor:0});renderEditCred();switchEditTab("cred");}
+function delCredCia(i){DR.creditoCia.splice(i,1);renderEditCred();switchEditTab("cred");}
+function editConc(i,campo,val){DR.conciliacao[i][campo]=(campo==="cia")?val:(campo==="dias"?(parseInt(val,10)||0):(parseFloat(String(val).replace(/\./g,"").replace(",","."))||0));}
+function addConc(){DR.conciliacao.push({cia:"",faturamento:0,dias:0});renderEditCred();switchEditTab("cred");}
+function delConc(i){DR.conciliacao.splice(i,1);renderEditCred();switchEditTab("cred");}
+function recalcCreditoTotal(){DR.creditoTotal=round2(DR.creditoCia.reduce((s,c)=>s+(Number(c.valor)||0),0));renderEditCred();switchEditTab("cred");toast("Total recalculado: "+fmt(DR.creditoTotal),"Σ");}
+
+/* Reconhecimento de CIAs de seguro */
+const SEGURO_CONHECIDAS=["porto","allianz","mapfre","tokio","azul","hdi","liberty","zurich","bradesco","caixa","sura","suhai","alfa","ezze","pier","gente","sancor","banestes","sompo","mitsui","sulamerica","sul america","ylm","essor","kovr","novo seguros","usebens","brasil veiculos","brasil veículos"];
+function ehSeguradora(nome){
+  const n=normTxt(nome);
+  if(/segur/.test(n))return true;                       // "SEGUROS", "SEGURADORA"
+  return SEGURO_CONHECIDAS.some(s=>n.includes(s));
+}
+/* nome curto e amigável para o gráfico */
+function nomeCurtoCia(nome){
+  const n=normTxt(nome);
+  const map=[["porto","Porto Seguro"],["allianz","Allianz"],["mapfre","Mapfre"],["tokio","Tokio"],
+    ["azul","Azul"],["hdi","HDI"],["liberty","Liberty"],["zurich","Zurich"],["bradesco","Bradesco"],
+    ["caixa","Caixa"],["sura","Sura"],["suhai","Suhai"],["alfa","Alfa"],["ezze","Ezze"],["pier","Pier"],
+    ["gente","Gente"],["sancor","Sancor"],["banestes","Banestes"],["sompo","Sompo"],["mitsui","Mitsui"],
+    ["sulamerica","Sulamerica"],["sul america","Sulamerica"],["ylm","YLM"],["essor","Essor"],
+    ["kovr","Kovr"],["novo seguros","Novo Seguros"],["usebens","Usebens"],["brasil veic","Brasil Veículos"]];
+  for(const[k,v]of map){if(n.includes(k))return v;}
+  // fallback: Title Case do primeiro termo significativo
+  return String(nome||"").trim().split(/\s+/).slice(0,2).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
+}
+function analisarCredito(){
+  const txt=document.getElementById("paste-cred").value;
+  const prev=document.getElementById("paste-cred-prev");
+  const soSeguro=document.getElementById("cred-so-seguro").checked;
+  if(!txt||!txt.trim()){prev.innerHTML=msgErro("Cole a tabela de crédito antes de analisar.");toast("Nada para analisar","⚠️");return;}
+  let linhas=txt.replace(/\r/g,"").split("\n").filter(l=>l.trim().length);
+  const sep=detectarSeparador(linhas[0]);
+  const novas=[], descartadas=[];
+  linhas.forEach((l,idx)=>{
+    const c=l.split(sep).map(x=>x.trim());
+    if(c.length<3)return;
+    const cliente=c[0];
+    const nc=normTxt(cliente);
+    if(idx===0 && /cliente|cia|client/.test(nc))return;     // cabeçalho
+    if(/total\s*geral/.test(nc))return;                      // linha de total
+    if(!cliente)return;
+    // Total geral = última coluna; se ausente, calcula Crédito - |Estorno|
+    let liq;
+    const ultima=c[c.length-1];
+    liq=parseValorBR(ultima);
+    // se a última célula vier vazia mas houver crédito/estorno, calcula
+    if((!ultima || isNaN(parseFloat(String(ultima).replace(/[^\d.,-]/g,"")))) && c.length>=4){
+      const cred=parseValorBR(c[c.length-3]), est=parseValorBR(c[c.length-2]);
+      liq=round2(cred+est); // estorno já vem negativo
+    }
+    if(soSeguro && !ehSeguradora(cliente)){descartadas.push(cliente);return;}
+    novas.push({cia:nomeCurtoCia(cliente),valor:round2(liq)});
+  });
+  if(!novas.length){prev.innerHTML=msgErro("Nenhuma CIA de seguro reconhecida. Desmarque \"Manter apenas CIAs de seguro\" para importar todas, ou verifique as colunas.");toast("Sem registros","❌");return;}
+  // ordena desc por valor
+  novas.sort((a,b)=>b.valor-a.valor);
+  DR.creditoCia=novas;
+  DR.creditoTotal=round2(novas.reduce((s,c)=>s+c.valor,0));
+  const amostra=novas.slice(0,12);
+  prev.innerHTML=`<div class="paste-ok">✅ <b>${novas.length}</b> CIA(s) de seguro importada(s) • Crédito líquido total: <b>${fmt(DR.creditoTotal)}</b>${descartadas.length?` • ${descartadas.length} cliente(s) não-seguro descartado(s)`:""}</div>
+    <div class="paste-tblwrap"><table class="tbl paste-tbl"><thead><tr><th>CIA</th><th class="num">Crédito líquido</th></tr></thead><tbody>
+    ${amostra.map(c=>`<tr><td>${c.cia}</td><td class="num">${fmt(c.valor)}</td></tr>`).join("")}
+    </tbody></table></div>
+    ${novas.length>amostra.length?`<div class="paste-more">…e mais ${novas.length-amostra.length} CIA(s).</div>`:""}
+    ${descartadas.length?`<div class="paste-more">Descartados (não-seguro): ${descartadas.slice(0,12).join(", ")}${descartadas.length>12?"…":""}</div>`:""}`;
+  salvar();
+  toast(novas.length+" CIA(s) importada(s)","✅");
+  renderEditCred(); switchEditTab("cred");
+  document.getElementById("paste-cred").value=txt;
+  document.getElementById("paste-cred-prev").innerHTML=prev.innerHTML;
+}
+
 function renderEditAcoes(){
   const STt=["Pendente","Em andamento","Concluído"];
   document.getElementById("etab-acoes").innerHTML=`
@@ -1282,9 +1581,11 @@ function addAcao(){DR.acoes.push({desc:"Nova ação",resp:"",prazo:"",status:"Pe
 function delAcao(i){DR.acoes.splice(i,1);renderEditAcoes();switchEditTab("acoes");}
 function renderEditGeral(){
   document.getElementById("etab-geral").innerHTML=`
-    <div class="edit-card" style="max-width:420px">
-      <div class="ec-field" style="margin-bottom:11px"><label>Mês de referência</label><input value="${DR.refMes||""}" onchange="DR.refMes=this.value;document.getElementById('tb-refmes').textContent=this.value"></div>
-      <div class="ec-field"><label>Crédito total (R$)</label><input type="number" step="0.01" value="${DR.creditoTotal||0}" onchange="DR.creditoTotal=parseFloat(this.value)||0"></div>
+    <div class="edit-card" style="max-width:460px">
+      <div class="ec-field" style="margin-bottom:11px"><label>Mês de referência (geral)</label><input value="${DR.refMes||""}" onchange="DR.refMes=this.value;document.getElementById('tb-refmes').textContent=this.value"></div>
+      <div class="ec-field" style="margin-bottom:11px"><label>Mês de referência das coletas</label><input value="${DR.coletas.mesRef||""}" onchange="DR.coletas.mesRef=this.value" placeholder="Ex.: Junho"></div>
+      <div class="ec-field"><label>Crédito líquido total (R$)</label><input type="number" step="0.01" value="${DR.creditoTotal||0}" onchange="DR.creditoTotal=parseFloat(this.value)||0"></div>
+      <div class="paste-cols" style="margin:9px 0 0">As tabelas de coleta/expedição/calda são editadas na aba <b>🚚 Devoluções & Logística</b>; o crédito por CIA na aba <b>💳 Crédito & Conciliação</b>.</div>
     </div>`;
 }
 function salvarConfig(){salvar();popularFiltros();toast("Dados salvos","💾");}
